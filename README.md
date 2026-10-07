@@ -1,6 +1,6 @@
 # Аренда спецтехники
 
-Бэкенд сервиса аренды спецтехники: каталог техники на карте, бронирование по часам и сменам,
+Веб-приложение для аренды спецтехники: каталог техники на карте, бронирование по часам и сменам,
 опционально с оператором и доставкой на объект.
 
 **Бэкенд:** FastAPI, SQLAlchemy 2.0 (async), PostgreSQL 16, Alembic, Docker
@@ -56,7 +56,7 @@ npm run dev
 
 ```sql
 EXCLUDE USING gist (equipment_id WITH =, period WITH &&)
-WHERE (status IN ('pending', 'paid', 'active'))
+WHERE (status IN ('pending', 'confirmed', 'active'))
 ```
 
 PostgreSQL сам не даст сохранить пересекающиеся брони одной техники, даже при одновременных
