@@ -137,9 +137,7 @@ async def list_categories(session: SessionDep) -> list[Category]:
 
 
 @router.get("/equipment", response_model=EquipmentPage)
-async def list_equipment(
-    session: SessionDep, filters: Annotated[EquipmentFilters, Query()]
-) -> EquipmentPage:
+async def list_equipment(session: SessionDep, filters: Annotated[EquipmentFilters, Query()]) -> EquipmentPage:
     f = filters
     conditions: list[ColumnElement[bool]] = [Equipment.status == EquipmentStatus.available]
 
@@ -159,9 +157,7 @@ async def list_equipment(
     if f.available_from and f.available_to:
         # Свободна, если нет ни одной занимающей брони, пересекающейся с периодом.
         # Проверка идёт по тому же GiST-индексу, что и ограничение от двойного бронирования
-        period = bindparam(
-            "period", Range(f.available_from, f.available_to, bounds="[)"), type_=TSTZRANGE
-        )
+        period = bindparam("period", Range(f.available_from, f.available_to, bounds="[)"), type_=TSTZRANGE)
         conditions.append(
             ~exists().where(
                 Booking.equipment_id == Equipment.id,
@@ -192,9 +188,7 @@ async def list_equipment(
 
 
 @router.get("/equipment/{equipment_id}", response_model=EquipmentRead)
-async def get_equipment(
-    equipment_id: int, session: SessionDep, user: OptionalUser
-) -> EquipmentRead:
+async def get_equipment(equipment_id: int, session: SessionDep, user: OptionalUser) -> EquipmentRead:
     eq = await load_equipment(session, equipment_id)
     # Снятую с размещения технику видят только владелец и админ
     if eq is None or (eq.status != EquipmentStatus.available and not can_manage(user, eq)):
@@ -217,9 +211,7 @@ async def list_my_equipment(session: SessionDep, user: OwnerUser) -> list[Equipm
 
 
 @router.post("/equipment", response_model=EquipmentRead, status_code=status.HTTP_201_CREATED)
-async def create_equipment(
-    data: EquipmentCreate, session: SessionDep, user: OwnerUser
-) -> EquipmentRead:
+async def create_equipment(data: EquipmentCreate, session: SessionDep, user: OwnerUser) -> EquipmentRead:
     await ensure_category_exists(session, data.category_id)
     eq = Equipment(**data.model_dump(), owner_id=user.id)
     session.add(eq)
@@ -239,19 +231,24 @@ async def update_equipment(
     if changes.get("category_id") is not None:
         await ensure_category_exists(session, changes["category_id"])
     # Обязательные поля нельзя «обнулить» через PATCH
-    for field in ("name", "category_id", "latitude", "longitude", "price_per_hour", "min_hours",
-                  "operator_available", "status", "specs"):
+    for field in (
+        "name",
+        "category_id",
+        "latitude",
+        "longitude",
+        "price_per_hour",
+        "min_hours",
+        "operator_available",
+        "status",
+        "specs",
+    ):
         if field in changes and changes[field] is None:
-            raise HTTPException(
-                status.HTTP_422_UNPROCESSABLE_CONTENT, detail=f"Поле {field} не может быть пустым"
-            )
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=f"Поле {field} не может быть пустым")
 
     for field, value in changes.items():
         setattr(eq, field, value)
     if eq.operator_available and eq.operator_price_per_hour is None:
-        raise HTTPException(
-            status.HTTP_422_UNPROCESSABLE_CONTENT, detail="Укажите цену оператора за час"
-        )
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail="Укажите цену оператора за час")
 
     await session.commit()
     updated = await load_equipment(session, eq.id)
@@ -263,11 +260,7 @@ async def update_equipment(
 async def delete_equipment(equipment_id: int, session: SessionDep, user: OwnerUser) -> None:
     eq = await get_managed_equipment(session, equipment_id, user)
     has_bookings = await session.scalar(
-        select(
-            exists().where(
-                Booking.equipment_id == eq.id, Booking.status.in_(BLOCKING_STATUSES)
-            )
-        )
+        select(exists().where(Booking.equipment_id == eq.id, Booking.status.in_(BLOCKING_STATUSES)))
     )
     if has_bookings:
         raise HTTPException(
@@ -316,12 +309,8 @@ async def upload_photos(
     return refreshed.photos
 
 
-@router.delete(
-    "/equipment/{equipment_id}/photos/{photo_id}", status_code=status.HTTP_204_NO_CONTENT
-)
-async def delete_photo(
-    equipment_id: int, photo_id: int, session: SessionDep, user: OwnerUser
-) -> None:
+@router.delete("/equipment/{equipment_id}/photos/{photo_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_photo(equipment_id: int, photo_id: int, session: SessionDep, user: OwnerUser) -> None:
     eq = await get_managed_equipment(session, equipment_id, user)
     photo = next((p for p in eq.photos if p.id == photo_id), None)
     if photo is None:

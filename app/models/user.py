@@ -7,7 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import Base
 
 
-class UserRole(str, enum.Enum):
+class UserRole(enum.StrEnum):
     client = "client"  # арендатор
     owner = "owner"  # владелец техники
     admin = "admin"
@@ -26,9 +26,7 @@ class User(Base):
         default=UserRole.client,
         server_default=UserRole.client.value,
     )
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     # Telegram: id чата для уведомлений и одноразовый код привязки из ссылки t.me/<бот>?start=<код>
     telegram_chat_id: Mapped[int | None] = mapped_column(BigInteger, unique=True)

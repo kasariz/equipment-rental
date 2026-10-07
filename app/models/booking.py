@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     from app.models.user import User
 
 
-class BookingStatus(str, enum.Enum):
+class BookingStatus(enum.StrEnum):
     pending = "pending"  # клиент оставил заявку, ждёт звонка владельца
     confirmed = "confirmed"  # владелец созвонился и подтвердил
     active = "active"  # техника в работе
@@ -36,7 +36,7 @@ class BookingStatus(str, enum.Enum):
     expired = "expired"  # владелец не подтвердил вовремя
 
 
-class RateType(str, enum.Enum):
+class RateType(enum.StrEnum):
     hourly = "hourly"  # quantity = часы
     shift = "shift"  # quantity = смены по 8 часов, по одной в день
 
@@ -63,9 +63,7 @@ class Booking(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
-    equipment_id: Mapped[int] = mapped_column(
-        ForeignKey("equipment.id", ondelete="CASCADE"), index=True
-    )
+    equipment_id: Mapped[int] = mapped_column(ForeignKey("equipment.id", ondelete="CASCADE"), index=True)
 
     # Полуоткрытый интервал [начало, конец): аренда 10:00–14:00 не конфликтует с 14:00–18:00
     period: Mapped[Range[datetime]] = mapped_column(TSTZRANGE)
@@ -88,9 +86,7 @@ class Booking(Base):
         default=BookingStatus.pending,
         server_default=BookingStatus.pending.value,
     )
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )

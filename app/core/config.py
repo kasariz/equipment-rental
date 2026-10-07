@@ -1,8 +1,15 @@
+from typing import Literal
+
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+DEV_SECRET = "dev-secret-change-me-please-32-bytes-min"
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    environment: Literal["development", "production"] = "development"
 
     postgres_user: str = "rental"
     postgres_password: str = "rental"
@@ -12,7 +19,7 @@ class Settings(BaseSettings):
 
     # Ключ для подписи JWT. Для разработки есть значение по умолчанию,
     # в продакшене обязательно задать свой в .env
-    secret_key: str = "dev-secret-change-me-please-32-bytes-min"
+    secret_key: str = DEV_SECRET
     access_token_expire_minutes: int = 60 * 24 * 7  # неделя
     # В разработке сайт работает по http, поэтому secure-cookie выключены
     cookie_secure: bool = False
@@ -35,6 +42,13 @@ class Settings(BaseSettings):
     # Адрес сайта для кнопок в сообщениях. Telegram не принимает ссылки на localhost,
     # поэтому с локальным адресом кнопки просто не добавляются
     site_url: str = "http://localhost:5173"
+
+    @model_validator(mode="after")
+    def check_production(self) -> "Settings":
+        # Сервер с ключом из репозитория — это сервер, где любой может подделать вход
+        if self.environment == "production" and (self.secret_key == DEV_SECRET or len(self.secret_key) < 32):
+            raise ValueError("В production задайте свой SECRET_KEY длиной от 32 символов")
+        return self
 
     @property
     def database_url(self) -> str:

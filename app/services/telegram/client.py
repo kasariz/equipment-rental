@@ -18,9 +18,9 @@ def enabled() -> bool:
     return bool(settings.telegram_bot_token)
 
 
-async def call(method: str, params: dict[str, Any] | None = None, *, timeout: float = 10) -> Any:
+async def call(method: str, params: dict[str, Any] | None = None, *, http_timeout: float = 10) -> Any:
     url = f"{settings.telegram_api_base}/bot{settings.telegram_bot_token}/{method}"
-    async with httpx.AsyncClient(timeout=timeout) as client:
+    async with httpx.AsyncClient(timeout=http_timeout) as client:
         response = await client.post(url, json=params or {})
     data = response.json()
     if not data.get("ok"):

@@ -8,3 +8,6 @@ __pycache__/
 node_modules/
 frontend/dist/
 media/
+.env.prod
+.pytest_cache/
+.ruff_cache/

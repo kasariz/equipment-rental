@@ -83,6 +83,4 @@ class BookingRead(BaseModel):
     created_at: datetime
     equipment: BookingEquipment
     client: Contact | None = Field(default=None, description="Для владельца: кто арендует")
-    owner: Contact | None = Field(
-        default=None, description="Для клиента: контакт владельца после подтверждения"
-    )
+    owner: Contact | None = Field(default=None, description="Для клиента: контакт владельца после подтверждения")

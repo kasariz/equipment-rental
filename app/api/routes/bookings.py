@@ -62,7 +62,7 @@ async def quote_for(session: AsyncSession, params: BookingParams) -> tuple[Equip
     try:
         quote = calculate(eq, params.rate_type, params.start, params.quantity, params.with_operator)
     except PricingError as e:
-        raise unprocessable(str(e))
+        raise unprocessable(str(e)) from e
     return eq, quote
 
 
@@ -261,7 +261,7 @@ async def create_booking(
             raise HTTPException(
                 status.HTTP_409_CONFLICT,
                 detail="Это время уже занято. Выберите другое начало или длительность",
-            )
+            ) from None
         raise
     background.add_task(booking_event, booking.id, "created")
     return to_read(await reload(session, booking.id), for_owner=False)

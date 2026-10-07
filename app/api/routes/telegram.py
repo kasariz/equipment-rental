@@ -7,7 +7,6 @@ from pydantic import BaseModel
 from app.api.deps import CurrentUser, SessionDep
 from app.services.telegram import client
 from app.services.telegram.bot import bot_username
-from app.services.telegram.client import TelegramError
 
 router = APIRouter(prefix="/telegram", tags=["telegram"])
 
@@ -35,8 +34,10 @@ async def create_link(user: CurrentUser, session: SessionDep) -> TelegramLink:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, detail="Telegram-уведомления не настроены на сервере")
     try:
         username = await bot_username()
-    except (TelegramError, Exception):
-        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, detail="Telegram сейчас недоступен, попробуйте позже")
+    except Exception as e:  # сеть, неверный токен, ошибка Telegram
+        raise HTTPException(
+            status.HTTP_503_SERVICE_UNAVAILABLE, detail="Telegram сейчас недоступен, попробуйте позже"
+        ) from e
 
     # Параметр start в Telegram: до 64 символов, только латиница, цифры, _ и -
     code = secrets.token_urlsafe(24)

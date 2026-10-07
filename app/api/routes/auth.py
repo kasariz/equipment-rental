@@ -45,9 +45,7 @@ async def register(data: UserCreate, session: SessionDep, response: Response) ->
         await session.commit()
     except IntegrityError:
         await session.rollback()
-        raise HTTPException(
-            status.HTTP_409_CONFLICT, detail="Пользователь с таким email уже зарегистрирован"
-        )
+        raise HTTPException(status.HTTP_409_CONFLICT, detail="Пользователь с таким email уже зарегистрирован") from None
     await session.refresh(user)
     set_auth_cookie(response, user.id)
     return user

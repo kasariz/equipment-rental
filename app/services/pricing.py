@@ -31,9 +31,7 @@ def shift_price(eq: Equipment) -> Decimal:
     return eq.price_per_shift if eq.price_per_shift is not None else eq.price_per_hour * SHIFT_HOURS
 
 
-def calculate(
-    eq: Equipment, rate_type: RateType, start: datetime, quantity: int, with_operator: bool
-) -> Quote:
+def calculate(eq: Equipment, rate_type: RateType, start: datetime, quantity: int, with_operator: bool) -> Quote:
     if with_operator and not eq.operator_available:
         raise PricingError("Владелец не предоставляет оператора для этой техники")
 

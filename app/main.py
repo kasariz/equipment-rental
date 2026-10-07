@@ -37,6 +37,10 @@ app = FastAPI(
     version="0.5.0",
     generate_unique_id_function=generate_operation_id,
     lifespan=lifespan,
+    # Документация под /api: на сервере всё, что не /api и не /media, отдаёт фронтенд
+    docs_url="/api/docs",
+    redoc_url=None,
+    openapi_url="/api/openapi.json",
 )
 app.include_router(api_router)
 # Загруженные фото. В продакшене их будет раздавать nginx или CDN

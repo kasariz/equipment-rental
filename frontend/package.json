@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "gen:api": "npx --yes openapi-typescript@7 http://127.0.0.1:8000/openapi.json -o src/api/schema.d.ts"
+    "gen:api": "npx --yes openapi-typescript@7 http://127.0.0.1:8000/api/openapi.json -o src/api/schema.d.ts"
   },
   "dependencies": {
     "@fontsource-variable/onest": "^5.3.1",

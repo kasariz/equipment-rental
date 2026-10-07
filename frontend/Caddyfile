@@ -1,0 +1,35 @@
+# SITE_ADDRESS: ":80" для запуска на своём компьютере,
+# доменное имя на сервере (например, kovsh.example.ru) — тогда Caddy сам получит HTTPS-сертификат
+{$SITE_ADDRESS::80} {
+	encode zstd gzip
+
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		# Яндекс Картам нужен адрес сайта в Referer, поэтому не no-referrer
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+
+	# API и документация к нему
+	handle /api/* {
+		reverse_proxy backend:8000
+	}
+
+	# Фото техники отдаём прямо с диска, не нагружая Python
+	handle_path /media/* {
+		root * /srv/media
+		file_server
+	}
+
+	# Файлы сборки с хэшем в имени можно кэшировать навсегда
+	@assets path /assets/*
+	header @assets Cache-Control "public, max-age=31536000, immutable"
+
+	# Всё остальное — одностраничное приложение: неизвестные пути ведут на index.html
+	handle {
+		root * /srv/app
+		try_files {path} /index.html
+		file_server
+	}
+}

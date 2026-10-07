@@ -27,7 +27,7 @@ if TYPE_CHECKING:
     from app.models.user import User
 
 
-class EquipmentStatus(str, enum.Enum):
+class EquipmentStatus(enum.StrEnum):
     available = "available"
     maintenance = "maintenance"  # на ремонте/ТО
     inactive = "inactive"  # снята с размещения
@@ -69,9 +69,7 @@ class Equipment(Base):
         default=EquipmentStatus.available,
         server_default=EquipmentStatus.available.value,
     )
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     category: Mapped["Category"] = relationship(lazy="raise")
     owner: Mapped["User"] = relationship(lazy="raise")

@@ -44,7 +44,8 @@ async def reply(chat_id: int, text: str) -> None:
 async def link_account(chat_id: int, code: str) -> None:
     async with SessionLocal() as session:
         user = await session.scalar(select(User).where(User.telegram_link_code == code))
-        if user is None or user.telegram_link_expires_at is None or user.telegram_link_expires_at < datetime.now(UTC):
+        expired = user is None or not user.telegram_link_expires_at or user.telegram_link_expires_at < datetime.now(UTC)
+        if expired:
             await reply(chat_id, "Ссылка устарела. Нажмите «Подключить Telegram» в профиле на сайте ещё раз.")
             return
         # Один чат — один аккаунт: если этот Telegram был привязан к другому аккаунту, отвязываем
@@ -100,7 +101,7 @@ async def polling_loop() -> None:
             updates = await client.call(
                 "getUpdates",
                 {"offset": offset, "timeout": 25, "allowed_updates": ["message"]},
-                timeout=35,
+                http_timeout=35,
             )
             for upd in updates:
                 offset = upd["update_id"] + 1

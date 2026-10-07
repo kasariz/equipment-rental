@@ -21,8 +21,20 @@ from app.services.telegram.client import TelegramError
 log = logging.getLogger(__name__)
 
 TZ = ZoneInfo(settings.timezone)
-MONTHS = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа",
-          "сентября", "октября", "ноября", "декабря"]
+MONTHS = [
+    "января",
+    "февраля",
+    "марта",
+    "апреля",
+    "мая",
+    "июня",
+    "июля",
+    "августа",
+    "сентября",
+    "октября",
+    "ноября",
+    "декабря",
+]
 
 
 def fmt_dt(d: datetime) -> str:
@@ -41,13 +53,20 @@ def fmt_rub(value) -> str:
     return f"{int(value):,}".replace(",", " ") + " ₽"
 
 
+def plural(n: int, one: str, few: str, many: str) -> str:
+    """1 час, 2 часа, 5 часов"""
+    if n % 10 == 1 and n % 100 != 11:
+        return one
+    if 2 <= n % 10 <= 4 and not 12 <= n % 100 <= 14:
+        return few
+    return many
+
+
 def fmt_rate(b: Booking) -> str:
     n = b.quantity
     if b.rate_type == "hourly":
-        word = "час" if n % 10 == 1 and n % 100 != 11 else "часа" if 2 <= n % 10 <= 4 and not 12 <= n % 100 <= 14 else "часов"
-        return f"{n} {word}"
-    word = "смена" if n % 10 == 1 and n % 100 != 11 else "смены" if 2 <= n % 10 <= 4 and not 12 <= n % 100 <= 14 else "смен"
-    return f"{n} {word} по 8 ч"
+        return f"{n} {plural(n, 'час', 'часа', 'часов')}"
+    return f"{n} {plural(n, 'смена', 'смены', 'смен')} по 8 ч"
 
 
 def site_button(text: str, path: str) -> dict | None:
@@ -117,8 +136,11 @@ async def booking_event(booking_id: int, event: str) -> None:
             lines.append(f"Адрес объекта: {escape(b.delivery_address)}")
         if b.comment:
             lines.append(f"Комментарий: {escape(b.comment)}")
-        lines += ["", f"Позвоните клиенту и подтвердите бронь в разделе «Заявки». "
-                      f"Без подтверждения заявка отменится через {settings.booking_pending_ttl_hours} ч."]
+        lines += [
+            "",
+            f"Позвоните клиенту и подтвердите бронь в разделе «Заявки». "
+            f"Без подтверждения заявка отменится через {settings.booking_pending_ttl_hours} ч.",
+        ]
         await send(owner, "\n".join(lines), site_button("Открыть заявки", "/my/requests"))
 
     elif event == "confirmed":
@@ -128,17 +150,26 @@ async def booking_event(booking_id: int, event: str) -> None:
 
     elif event == "rejected":
         reason = f"\nПричина: {escape(b.reject_reason)}" if b.reject_reason else ""
-        text = f"❌ <b>Владелец отклонил заявку</b>\n{header(b)}{reason}\n\nПодберите другое время или технику в каталоге."
+        text = (
+            f"❌ <b>Владелец отклонил заявку</b>\n{header(b)}{reason}\n\nПодберите другое время или технику в каталоге."
+        )
         await send(client_user, text, site_button("Открыть каталог", "/catalog"))
 
     elif event == "cancelled":
-        text = f"↩️ <b>Клиент отменил бронь</b>\n{header(b)}\n\nКлиент: {escape(client_user.full_name)}. Время снова свободно."
+        text = (
+            f"↩️ <b>Клиент отменил бронь</b>\n{header(b)}\n\n"
+            f"Клиент: {escape(client_user.full_name)}. Время снова свободно."
+        )
         await send(owner, text)
 
     elif event == "expired":
         await send(
             client_user,
-            f"⌛ <b>Заявка не подтверждена вовремя</b>\n{header(b)}\n\nВладелец не успел подтвердить её, время освободилось.",
+            f"⌛ <b>Заявка не подтверждена вовремя</b>\n{header(b)}\n\n"
+            "Владелец не успел подтвердить её, время освободилось.",
             site_button("Открыть каталог", "/catalog"),
         )
-        await send(owner, f"⌛ <b>Заявка сгорела без подтверждения</b>\n{header(b)}\n\nКлиент: {escape(client_user.full_name)}")
+        await send(
+            owner,
+            f"⌛ <b>Заявка сгорела без подтверждения</b>\n{header(b)}\n\nКлиент: {escape(client_user.full_name)}",
+        )

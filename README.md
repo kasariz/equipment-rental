@@ -1,5 +1,7 @@
 # Аренда спецтехники
 
+[![CI](https://github.com/kasariz/equipment-rental/actions/workflows/ci.yml/badge.svg)](https://github.com/kasariz/equipment-rental/actions/workflows/ci.yml)
+
 Веб-приложение для аренды спецтехники: каталог техники на карте, бронирование по часам и сменам,
 опционально с оператором и доставкой на объект.
 
@@ -40,10 +42,34 @@ npm run dev
 - Сайт: http://localhost:5173 (именно localhost: ключ Яндекс Карт привязан к этому имени)
 - Демо-владелец: `owner@demo.ru` / `demo12345`
 - Демо-клиент: `client@demo.ru` / `demo12345`
-- Документация API: http://127.0.0.1:8000/docs
+- Документация API: http://127.0.0.1:8000/api/docs
 - Проверка работы: http://127.0.0.1:8000/api/health
 
 После изменений в API обновите типы на фронте (бэкенд должен быть запущен): `npm run gen:api`.
+
+## Тесты
+
+```powershell
+pip install -r requirements-dev.txt
+pytest
+```
+
+Нужен запущенный PostgreSQL (`docker compose up -d`). Тесты сами создают отдельную базу `rental_test`,
+прогоняют на ней все миграции с нуля и проверяют API через HTTP: авторизацию, права доступа, фильтры
+каталога, загрузку фото, расчёт цены, жизненный цикл брони, гонки при одновременных запросах
+и Telegram-уведомления (с подменённым Bot API). Те же проверки и линтер запускает GitHub Actions на каждый push.
+
+## Весь стек в Docker
+
+```powershell
+copy .env.prod.example .env.prod      # заполнить SECRET_KEY и пароль базы
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
+docker compose -f docker-compose.prod.yml --env-file .env.prod exec backend python -m app.scripts.seed
+```
+
+Сайт откроется на http://localhost. Три контейнера: PostgreSQL, бэкенд (миграции применяются при старте)
+и Caddy, который раздаёт собранный фронтенд и фото, проксирует `/api` и на сервере с доменом
+сам получает HTTPS-сертификат.
 
 ## Уведомления в Telegram (необязательно)
 

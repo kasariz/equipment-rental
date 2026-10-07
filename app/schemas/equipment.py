@@ -76,7 +76,6 @@ class EquipmentFields(BaseModel):
     operator_price_per_hour: Money | None = None
 
 
-
 def _check_operator_price(operator_available: bool, price: Decimal | None) -> None:
     if operator_available and price is None:
         raise ValueError("Укажите цену оператора за час")
@@ -105,7 +104,6 @@ class EquipmentUpdate(BaseModel):
     operator_available: bool | None = None
     operator_price_per_hour: Money | None = None
     status: EquipmentStatus | None = None
-
 
 
 class EquipmentListItem(BaseModel):

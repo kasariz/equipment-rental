@@ -41,11 +41,11 @@ async def save_equipment_photo(upload: UploadFile) -> str:
             filename = f"{uuid.uuid4().hex}.webp"
             ensure_media_dirs()
             img.save(EQUIPMENT_DIR / filename, "WEBP", quality=82)
-    except (UnidentifiedImageError, Image.DecompressionBombError, OSError):
+    except (UnidentifiedImageError, Image.DecompressionBombError, OSError) as e:
         raise HTTPException(
             status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=f"Файл {upload.filename} не похож на фото. Подойдут JPG, PNG или WebP",
-        )
+        ) from e
     return filename
 
 

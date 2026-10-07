@@ -8,11 +8,11 @@ from app.models.user import User, UserRole
 __all__ = [
     "Booking",
     "BookingStatus",
-    "RateType",
     "Category",
     "Equipment",
     "EquipmentPhoto",
     "EquipmentStatus",
+    "RateType",
     "User",
     "UserRole",
 ]
