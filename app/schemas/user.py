@@ -47,3 +47,4 @@ class UserRead(BaseModel):
     phone: str | None
     role: UserRole
     created_at: datetime
+    telegram_connected: bool

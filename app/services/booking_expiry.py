@@ -9,6 +9,7 @@ from sqlalchemy import func, or_, update
 from app.core.config import settings
 from app.db.session import SessionLocal
 from app.models import Booking, BookingStatus
+from app.services.telegram.notifications import booking_event
 
 log = logging.getLogger(__name__)
 CHECK_INTERVAL_SECONDS = 60
@@ -27,9 +28,13 @@ async def expire_stale_bookings() -> int:
                 ),
             )
             .values(status=BookingStatus.expired)
+            .returning(Booking.id)
         )
+        expired_ids = list(result.scalars())
         await session.commit()
-        return result.rowcount or 0
+    for booking_id in expired_ids:
+        await booking_event(booking_id, "expired")
+    return len(expired_ids)
 
 
 async def expiry_loop() -> None:

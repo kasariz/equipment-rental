@@ -1,12 +1,10 @@
 import { ArrowLeft, MapPin, Pencil } from 'lucide-react'
 import { useState } from 'react'
-import { MapContainer, Marker, TileLayer } from 'react-leaflet'
-import L from 'leaflet'
 import { Link, useParams } from 'react-router'
 import type { Equipment } from '@/api/client'
 import { BookingForm } from '@/components/booking/BookingForm'
 import { EquipmentImage } from '@/components/EquipmentImage'
-import { TILE_ATTRIBUTION, TILE_URL } from '@/components/map/constants'
+import { PointMap } from '@/components/map/PointMap'
 import { PageSpinner } from '@/components/PageSpinner'
 import { Button } from '@/components/ui/button'
 import { HorizontalScroller } from '@/components/ui/horizontal-scroller'
@@ -15,8 +13,6 @@ import { useEquipment } from '@/features/catalog/api'
 import { formatRub, statusLabels } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { NotFoundPage } from './NotFoundPage'
-
-const pin = L.divIcon({ className: 'price-pin-anchor', iconSize: [0, 0], html: '<span class="price-pin is-active">Здесь</span>' })
 
 function Gallery({ item }: { item: Equipment }) {
   const [index, setIndex] = useState(0)
@@ -161,10 +157,7 @@ export function EquipmentPage() {
           <section>
             <h2 className="font-display text-xl font-semibold">Где стоит техника</h2>
             <div className="mt-4 h-72 overflow-hidden rounded-xl border border-line">
-              <MapContainer center={[item.latitude, item.longitude]} zoom={13} className="size-full" scrollWheelZoom={false}>
-                <TileLayer url={TILE_URL} attribution={TILE_ATTRIBUTION} />
-                <Marker position={[item.latitude, item.longitude]} icon={pin} interactive={false} />
-              </MapContainer>
+              <PointMap lat={item.latitude} lng={item.longitude} label="Здесь" />
             </div>
           </section>
         </div>

@@ -1,84 +1,87 @@
-import L from 'leaflet'
-import { useEffect, useMemo, useRef } from 'react'
-import { MapContainer, Marker, TileLayer, useMap } from 'react-leaflet'
+import type { YMap } from '@yandex/ymaps3-types'
+import { useEffect, useRef, useState } from 'react'
 import type { EquipmentListItem } from '@/api/client'
 import { formatRub } from '@/lib/format'
-import { DEFAULT_CENTER, DEFAULT_ZOOM, TILE_ATTRIBUTION, TILE_URL } from './constants'
-
-function priceIcon(price: number, active: boolean) {
-  return L.divIcon({
-    className: 'price-pin-anchor',
-    iconSize: [0, 0],
-    html: `<span class="price-pin${active ? ' is-active' : ''}">${formatRub(price)}</span>`,
-  })
-}
-
-const userIcon = L.divIcon({
-  className: 'price-pin-anchor',
-  iconSize: [16, 16],
-  iconAnchor: [8, 8],
-  html: '<div class="user-dot"></div>',
-})
-
-/** Подгоняет карту под найденную технику, но только когда меняется сам набор результатов */
-function FitToItems({ items, userPoint }: { items: EquipmentListItem[]; userPoint?: [number, number] }) {
-  const map = useMap()
-  const key = items.map((i) => i.id).join(',') + (userPoint?.join(',') ?? '')
-  const lastKey = useRef<string | null>(null)
-
-  useEffect(() => {
-    if (key === lastKey.current) return
-    lastKey.current = key
-    const points: L.LatLngTuple[] = items.map((i) => [i.latitude, i.longitude])
-    if (userPoint) points.push(userPoint)
-    if (points.length === 0) return
-    if (points.length === 1) map.setView(points[0], 13)
-    else map.fitBounds(points, { padding: [48, 48], maxZoom: 14 })
-  }, [key, items, userPoint, map])
-
-  return null
-}
-
-/** Плавно показывает выбранную в списке технику, если она за краем карты */
-function PanToSelected({ item }: { item?: EquipmentListItem }) {
-  const map = useMap()
-  useEffect(() => {
-    if (!item) return
-    const point = L.latLng(item.latitude, item.longitude)
-    if (!map.getBounds().pad(-0.1).contains(point)) map.panTo(point)
-  }, [item, map])
-  return null
-}
+import {
+  boundsContain,
+  boundsFor,
+  DEFAULT_CENTER,
+  DEFAULT_ZOOM,
+  toLngLat,
+  type YMapsComponents,
+} from '@/lib/ymaps'
+import { MapFrame, ZoomButtons } from './MapFrame'
 
 type Props = {
   items: EquipmentListItem[]
   selectedId: number | null
   onSelect: (id: number) => void
-  userPoint?: [number, number]
+  userPoint?: [number, number] // [широта, долгота]
 }
 
-export function EquipmentMap({ items, selectedId, onSelect, userPoint }: Props) {
-  const selected = useMemo(() => items.find((i) => i.id === selectedId), [items, selectedId])
+type Location = Parameters<YMap['setLocation']>[0]
+
+function locationFor(items: EquipmentListItem[], userPoint?: [number, number]): Location {
+  const points = items.map((i) => toLngLat(i.latitude, i.longitude))
+  if (userPoint) points.push(toLngLat(userPoint[0], userPoint[1]))
+  if (points.length === 0) return { center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM }
+  if (points.length === 1) return { center: points[0], zoom: 13, duration: 300 }
+  return { bounds: boundsFor(points), duration: 300 }
+}
+
+function Map({ y, items, selectedId, onSelect, userPoint }: Props & { y: YMapsComponents }) {
+  const { YMap, YMapDefaultSchemeLayer, YMapDefaultFeaturesLayer, YMapMarker } = y
+  const mapRef = useRef<YMap>(null)
+
+  // Подгоняем карту под результаты, только когда меняется сам набор техники.
+  // Если человек сам подвинул карту, перерисовки её не дёргают
+  const fitKey = items.map((i) => i.id).join(',') + (userPoint?.join(',') ?? '')
+  const [fit, setFit] = useState(() => ({ key: fitKey, location: locationFor(items, userPoint) }))
+  if (fit.key !== fitKey) setFit({ key: fitKey, location: locationFor(items, userPoint) })
+
+  // Выбранная в списке техника за краем карты — плавно показываем её
+  const selected = items.find((i) => i.id === selectedId)
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !selected) return
+    const point = toLngLat(selected.latitude, selected.longitude)
+    if (!boundsContain(map.bounds, point)) map.setLocation({ center: point, duration: 300 })
+  }, [selected])
 
   return (
-    <MapContainer center={DEFAULT_CENTER} zoom={DEFAULT_ZOOM} className="size-full" zoomControl={false}>
-      <TileLayer url={TILE_URL} attribution={TILE_ATTRIBUTION} />
-      <FitToItems items={items} userPoint={userPoint} />
-      <PanToSelected item={selected} />
-      {userPoint && <Marker position={userPoint} icon={userIcon} interactive={false} />}
-      {items.map((item) => {
-        const active = item.id === selectedId
-        return (
-          <Marker
-            key={item.id}
-            position={[item.latitude, item.longitude]}
-            icon={priceIcon(item.price_per_hour, active)}
-            zIndexOffset={active ? 1000 : 0}
-            title={item.name}
-            eventHandlers={{ click: () => onSelect(item.id) }}
-          />
-        )
-      })}
-    </MapContainer>
+    <div className="relative size-full">
+      {/* Контейнер карты всегда на всю площадь родителя */}
+      <div className="absolute inset-0 [&>div]:size-full">
+        <YMap ref={mapRef} location={fit.location}>
+          <YMapDefaultSchemeLayer />
+          <YMapDefaultFeaturesLayer />
+          {userPoint && (
+            <YMapMarker coordinates={toLngLat(userPoint[0], userPoint[1])}>
+              <div className="user-dot" aria-label="Вы здесь" />
+            </YMapMarker>
+          )}
+          {items.map((item) => {
+            const active = item.id === selectedId
+            return (
+              <YMapMarker
+                key={item.id}
+                coordinates={toLngLat(item.latitude, item.longitude)}
+                zIndex={active ? 1000 : 0}
+                onClick={() => onSelect(item.id)}
+              >
+                <span className={active ? 'price-pin is-active' : 'price-pin'} title={item.name}>
+                  {formatRub(item.price_per_hour)}
+                </span>
+              </YMapMarker>
+            )
+          })}
+        </YMap>
+      </div>
+      <ZoomButtons mapRef={mapRef} />
+    </div>
   )
+}
+
+export function EquipmentMap(props: Props) {
+  return <MapFrame>{(y) => <Map y={y} {...props} />}</MapFrame>
 }

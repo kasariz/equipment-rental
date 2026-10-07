@@ -27,6 +27,15 @@ class Settings(BaseSettings):
     booking_max_days_ahead: int = 90
     booking_pending_ttl_hours: int = 24  # сколько ждём звонка владельца, потом заявка сгорает
 
+    # Telegram-уведомления. Без токена сайт работает, просто ничего не отправляет
+    telegram_bot_token: str = ""
+    telegram_api_base: str = "https://api.telegram.org"  # в тестах подменяется на фейковый сервер
+    # В этом часовом поясе время пишется в уведомлениях
+    timezone: str = "Europe/Moscow"
+    # Адрес сайта для кнопок в сообщениях. Telegram не принимает ссылки на localhost,
+    # поэтому с локальным адресом кнопки просто не добавляются
+    site_url: str = "http://localhost:5173"
+
     @property
     def database_url(self) -> str:
         return (

@@ -7,6 +7,7 @@ import { RejectDialog } from '@/components/booking/RejectDialog'
 import { PageSpinner } from '@/components/PageSpinner'
 import { Button } from '@/components/ui/button'
 import { useOwnerAction, useOwnerBookings, useRejectBooking } from '@/features/bookings/api'
+import { useTelegramStatus } from '@/features/telegram/api'
 import { formatPeriod } from '@/lib/dates'
 import { bookingStatusForOwner, bookingStatusStyle, describeRate, formatRub, telHref } from '@/lib/format'
 import { cn } from '@/lib/utils'
@@ -123,6 +124,7 @@ function RequestCard({ b }: { b: Booking }) {
 
 export function RequestsPage() {
   const { data, isPending, isError } = useOwnerBookings()
+  const { data: telegram } = useTelegramStatus()
   const [tab, setTab] = useState('new')
   const current = TABS.find((t) => t.key === tab)!
   const count = (statuses: BookingStatus[]) => data?.filter((b) => statuses.includes(b.status)).length ?? 0
@@ -135,6 +137,15 @@ export function RequestsPage() {
       <p className="mt-2 max-w-prose text-steel">
         Позвоните клиенту, договоритесь о деталях и подтвердите бронь. Неподтверждённая заявка отменится через сутки.
       </p>
+      {telegram?.enabled && !telegram.connected && (
+        <p className="mt-4 rounded-md border border-signal-dark/40 bg-signal/15 px-4 py-3 text-sm">
+          Чтобы узнавать о новых заявках сразу, а не только на сайте,{' '}
+          <Link to="/profile" className="font-medium underline underline-offset-4">
+            подключите уведомления в Telegram
+          </Link>
+          .
+        </p>
+      )}
 
       <div className="-mx-4 mt-8 flex gap-1 overflow-x-auto border-b border-line px-4" role="tablist">
         {TABS.map((t) => {

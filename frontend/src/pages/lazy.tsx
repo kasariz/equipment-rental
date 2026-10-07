@@ -1,6 +1,6 @@
 import { lazy } from 'react'
 
-// Страницы с картой и формами грузятся отдельными кусками: Leaflet не нужен на главной и при входе
+// Страницы с картой и формами грузятся отдельными кусками: Яндекс Карты не нужны на главной и при входе
 export const CatalogPage = lazy(() => import('@/pages/CatalogPage').then((m) => ({ default: m.CatalogPage })))
 export const EquipmentPage = lazy(() => import('@/pages/EquipmentPage').then((m) => ({ default: m.EquipmentPage })))
 export const MyEquipmentPage = lazy(() =>

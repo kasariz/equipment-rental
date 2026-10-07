@@ -7,6 +7,7 @@ import { Field } from '@/components/ui/field'
 import { HorizontalScroller } from '@/components/ui/horizontal-scroller'
 import { Input } from '@/components/ui/input'
 import { useMe } from '@/features/auth/api'
+import { useTelegramStatus } from '@/features/telegram/api'
 import { useNow } from '@/hooks/useNow'
 import { useBusy, useCreateBooking, useQuote, type BookingParams } from '@/features/bookings/api'
 import { addDays, addHours, atHour, formatPeriod, formatTime, overlaps, startOfDay, toLocalISO } from '@/lib/dates'
@@ -59,6 +60,7 @@ export function BookingForm({ item }: { item: Equipment }) {
   const busyQuery = useBusy(item.id)
   const create = useCreateBooking()
   const now = useNow()
+  const { data: telegram } = useTelegramStatus({ enabled: Boolean(user) })
 
   const [rate, setRate] = useState<RateType>('hourly')
   const [hours, setHours] = useState(item.min_hours)
@@ -144,6 +146,15 @@ export function BookingForm({ item }: { item: Equipment }) {
           Владелец позвонит вам по номеру <span className="whitespace-nowrap text-ink">{b.contact_phone}</span>, чтобы
           подтвердить бронь. Если он не подтвердит её в течение суток, заявка отменится сама.
         </p>
+        {telegram?.enabled && !telegram.connected && (
+          <p className="text-sm text-steel">
+            Чтобы сразу узнать о подтверждении,{' '}
+            <Link to="/profile" className="font-medium text-ink underline underline-offset-4">
+              подключите уведомления в Telegram
+            </Link>
+            .
+          </p>
+        )}
         <div className="mt-2 flex flex-wrap gap-2">
           <Button asChild variant="dark">
             <Link to="/bookings">Мои брони</Link>

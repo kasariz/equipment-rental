@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router'
 import { toast } from 'sonner'
+import { TelegramConnect } from '@/components/TelegramConnect'
 import { Button } from '@/components/ui/button'
 import { roleLabels, useLogout, useMe } from '@/features/auth/api'
 
@@ -30,6 +31,8 @@ export function ProfilePage() {
           </div>
         ))}
       </dl>
+
+      <TelegramConnect isOwner={user.role === 'owner' || user.role === 'admin'} />
 
       <Button
         variant="outline"

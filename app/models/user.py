@@ -1,7 +1,7 @@
 import enum
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, String, func
+from sqlalchemy import BigInteger, DateTime, Enum, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
@@ -29,3 +29,12 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+
+    # Telegram: id чата для уведомлений и одноразовый код привязки из ссылки t.me/<бот>?start=<код>
+    telegram_chat_id: Mapped[int | None] = mapped_column(BigInteger, unique=True)
+    telegram_link_code: Mapped[str | None] = mapped_column(String(64), unique=True)
+    telegram_link_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    @property
+    def telegram_connected(self) -> bool:
+        return self.telegram_chat_id is not None

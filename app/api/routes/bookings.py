@@ -1,6 +1,6 @@
 from datetime import UTC, datetime, timedelta
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, status
 from sqlalchemy import exists, func, select
 from sqlalchemy.dialects.postgresql import Range
 from sqlalchemy.exc import IntegrityError
@@ -21,6 +21,7 @@ from app.schemas.booking import (
     RejectBody,
 )
 from app.services.pricing import PricingError, Quote, calculate
+from app.services.telegram.notifications import booking_event
 
 router = APIRouter(tags=["bookings"])
 
@@ -225,7 +226,9 @@ async def quote_booking(params: BookingParams, session: SessionDep) -> QuoteRead
 
 
 @router.post("/bookings", response_model=BookingRead, status_code=status.HTTP_201_CREATED)
-async def create_booking(data: BookingCreate, session: SessionDep, user: CurrentUser) -> BookingRead:
+async def create_booking(
+    data: BookingCreate, session: SessionDep, user: CurrentUser, background: BackgroundTasks
+) -> BookingRead:
     eq, q = await quote_for(session, data)
     if eq.owner_id == user.id:
         raise unprocessable("Нельзя арендовать собственную технику")
@@ -260,6 +263,7 @@ async def create_booking(data: BookingCreate, session: SessionDep, user: Current
                 detail="Это время уже занято. Выберите другое начало или длительность",
             )
         raise
+    background.add_task(booking_event, booking.id, "created")
     return to_read(await reload(session, booking.id), for_owner=False)
 
 
@@ -275,7 +279,9 @@ async def my_bookings(session: SessionDep, user: CurrentUser) -> list[BookingRea
 
 
 @router.post("/bookings/{booking_id}/cancel", response_model=BookingRead)
-async def cancel_booking(booking_id: int, session: SessionDep, user: CurrentUser) -> BookingRead:
+async def cancel_booking(
+    booking_id: int, session: SessionDep, user: CurrentUser, background: BackgroundTasks
+) -> BookingRead:
     booking = await load_booking(session, booking_id)
     if booking.user_id != user.id:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Заявка не найдена")
@@ -283,6 +289,7 @@ async def cancel_booking(booking_id: int, session: SessionDep, user: CurrentUser
         raise HTTPException(status.HTTP_409_CONFLICT, detail="Аренда уже началась, отменить её на сайте нельзя")
     apply_transition(booking, "cancel")
     await session.commit()
+    background.add_task(booking_event, booking.id, "cancelled")
     return to_read(await reload(session, booking.id), for_owner=False)
 
 
@@ -314,19 +321,23 @@ async def owner_action(booking_id: int, action: str, session: AsyncSession, user
 
 
 @router.post("/bookings/{booking_id}/confirm", response_model=BookingRead)
-async def confirm_booking(booking_id: int, session: SessionDep, user: OwnerUser) -> BookingRead:
+async def confirm_booking(
+    booking_id: int, session: SessionDep, user: OwnerUser, background: BackgroundTasks
+) -> BookingRead:
     booking = await owner_action(booking_id, "confirm", session, user)
     await session.commit()
+    background.add_task(booking_event, booking.id, "confirmed")
     return to_read(await reload(session, booking.id), for_owner=True)
 
 
 @router.post("/bookings/{booking_id}/reject", response_model=BookingRead)
 async def reject_booking(
-    booking_id: int, body: RejectBody, session: SessionDep, user: OwnerUser
+    booking_id: int, body: RejectBody, session: SessionDep, user: OwnerUser, background: BackgroundTasks
 ) -> BookingRead:
     booking = await owner_action(booking_id, "reject", session, user)
     booking.reject_reason = (body.reason or "").strip() or None
     await session.commit()
+    background.add_task(booking_event, booking.id, "rejected")
     return to_read(await reload(session, booking.id), for_owner=True)
 
 

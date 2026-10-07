@@ -10,6 +10,7 @@ from app.api.router import api_router
 from app.core.config import settings
 from app.services.booking_expiry import expiry_loop
 from app.services.media import ensure_media_dirs
+from app.services.telegram.bot import polling_loop
 
 
 def generate_operation_id(route: APIRoute) -> str:
@@ -20,18 +21,20 @@ def generate_operation_id(route: APIRoute) -> str:
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     ensure_media_dirs()
-    expiry_task = asyncio.create_task(expiry_loop())
+    tasks = [asyncio.create_task(expiry_loop()), asyncio.create_task(polling_loop())]
     yield
-    expiry_task.cancel()
-    with suppress(asyncio.CancelledError):
-        await expiry_task
+    for task in tasks:
+        task.cancel()
+    for task in tasks:
+        with suppress(asyncio.CancelledError):
+            await task
 
 
 ensure_media_dirs()  # StaticFiles проверяет папку уже при создании приложения
 
 app = FastAPI(
     title="Аренда спецтехники",
-    version="0.4.0",
+    version="0.5.0",
     generate_unique_id_function=generate_operation_id,
     lifespan=lifespan,
 )

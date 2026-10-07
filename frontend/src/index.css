@@ -48,17 +48,7 @@
 
 /* ---------- Карта ---------- */
 
-.leaflet-container {
-  font-family: var(--font-sans);
-  background: var(--color-concrete);
-}
-
-/* Метка с ценой: якорь в точке техники, «хвостик» указывает вниз */
-.price-pin-anchor {
-  background: none;
-  border: none;
-}
-
+/* Метка с ценой: точка техники — кончик «хвостика» снизу */
 .price-pin {
   position: absolute;
   left: 0;
@@ -99,6 +89,8 @@
 }
 
 .user-dot {
+  position: absolute;
+  transform: translate(-50%, -50%);
   width: 16px;
   height: 16px;
   border-radius: 50%;

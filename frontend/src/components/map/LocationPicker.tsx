@@ -1,65 +1,53 @@
-import L from 'leaflet'
-import { useEffect } from 'react'
-import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from 'react-leaflet'
-import { DEFAULT_CENTER, DEFAULT_ZOOM, TILE_ATTRIBUTION, TILE_URL } from './constants'
-
-const pinIcon = L.divIcon({
-  className: 'price-pin-anchor',
-  iconSize: [0, 0],
-  html: '<span class="price-pin is-active">Техника здесь</span>',
-})
+import type { YMap } from '@yandex/ymaps3-types'
+import { useRef, useState } from 'react'
+import { cn } from '@/lib/utils'
+import { DEFAULT_CENTER, DEFAULT_ZOOM, toLngLat, type YMapsComponents } from '@/lib/ymaps'
+import { MapFrame, ZoomButtons } from './MapFrame'
 
 type Point = { lat: number; lng: number }
+type Props = { value: Point | null; onChange: (p: Point) => void; invalid?: boolean }
 
-function ClickHandler({ onChange }: { onChange: (p: Point) => void }) {
-  useMapEvents({ click: (e) => onChange({ lat: e.latlng.lat, lng: e.latlng.lng }) })
-  return null
-}
+function Picker({ y, value, onChange }: Props & { y: YMapsComponents }) {
+  const { YMap, YMapDefaultSchemeLayer, YMapDefaultFeaturesLayer, YMapMarker, YMapListener } = y
+  const mapRef = useRef<YMap>(null)
+  // Стартовая позиция: на метке, если она уже есть. Дальше карта не прыгает за каждым кликом
+  const [initial] = useState(() =>
+    value ? { center: toLngLat(value.lat, value.lng), zoom: 14 } : { center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM },
+  )
 
-function CenterOnce({ value }: { value: Point | null }) {
-  const map = useMap()
-  useEffect(() => {
-    if (value) map.setView([value.lat, value.lng], Math.max(map.getZoom(), 13))
-    // Центрируем только при первом показе, чтобы карта не прыгала за каждым кликом
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map])
-  return null
+  return (
+    <div className="relative size-full">
+      {/* Контейнер карты всегда на всю площадь родителя */}
+      <div className="absolute inset-0 [&>div]:size-full">
+        <YMap ref={mapRef} location={initial}>
+          <YMapDefaultSchemeLayer />
+          <YMapDefaultFeaturesLayer />
+          <YMapListener
+            layer="any"
+            onClick={(_object, event) => onChange({ lat: event.coordinates[1], lng: event.coordinates[0] })}
+          />
+          {value && (
+            <YMapMarker
+              coordinates={toLngLat(value.lat, value.lng)}
+              draggable
+              mapFollowsOnDrag
+              onDragEnd={(coords) => onChange({ lat: coords[1], lng: coords[0] })}
+            >
+              <span className="price-pin is-active cursor-grab">Техника здесь</span>
+            </YMapMarker>
+          )}
+        </YMap>
+      </div>
+      <ZoomButtons mapRef={mapRef} />
+    </div>
+  )
 }
 
 /** Владелец отмечает, где стоит техника: клик по карте или перетаскивание метки */
-export function LocationPicker({
-  value,
-  onChange,
-  invalid,
-}: {
-  value: Point | null
-  onChange: (p: Point) => void
-  invalid?: boolean
-}) {
+export function LocationPicker(props: Props) {
   return (
-    <div
-      className={
-        'h-72 overflow-hidden rounded-md border ' + (invalid ? 'border-danger' : 'border-line')
-      }
-    >
-      <MapContainer center={DEFAULT_CENTER} zoom={DEFAULT_ZOOM} className="size-full">
-        <TileLayer url={TILE_URL} attribution={TILE_ATTRIBUTION} />
-        <ClickHandler onChange={onChange} />
-        <CenterOnce value={value} />
-        {value && (
-          <Marker
-            position={[value.lat, value.lng]}
-            icon={pinIcon}
-            draggable
-            eventHandlers={{
-              dragend: (e) => {
-                const ll = (e.target as L.Marker).getLatLng()
-                onChange({ lat: ll.lat, lng: ll.lng })
-              },
-            }}
-          />
-        )}
-      </MapContainer>
+    <div className={cn('h-72 overflow-hidden rounded-md border', props.invalid ? 'border-danger' : 'border-line')}>
+      <MapFrame>{(y) => <Picker y={y} {...props} />}</MapFrame>
     </div>
   )
 }
