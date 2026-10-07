@@ -115,7 +115,7 @@ const selectClass =
 
 function Section({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
   return (
-    <section className="grid gap-5 border-t border-line pt-8 md:grid-cols-[220px_1fr] md:gap-10">
+    <section className="grid grid-cols-1 gap-5 border-t border-line pt-8 md:grid-cols-[220px_minmax(0,1fr)] md:gap-10">
       <div>
         <h2 className="font-display text-lg font-semibold">{title}</h2>
         {hint && <p className="mt-1.5 text-sm text-steel">{hint}</p>}
@@ -392,7 +392,7 @@ function EquipmentForm({ item }: { item?: Equipment }) {
       <Section title="Характеристики" hint="То, по чему выбирают технику: глубина копания, грузоподъёмность, масса">
         <ul className="flex flex-col gap-3">
           {specs.fields.map((f, i) => (
-            <li key={f.id} className="grid grid-cols-[1fr_1fr_auto] items-start gap-2">
+            <li key={f.id} className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-start gap-2">
               <div>
                 <Input
                   placeholder="Глубина копания"

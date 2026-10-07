@@ -212,7 +212,7 @@ export function CatalogPage() {
   }
 
   return (
-    <div className="lg:grid lg:h-[calc(100svh-70px)] lg:grid-cols-[minmax(400px,480px)_1fr]">
+    <div className="lg:grid lg:h-[calc(100svh-70px)] lg:grid-cols-[minmax(400px,480px)_minmax(0,1fr)]">
       {/* Левая колонка: фильтры и список */}
       <section className={cn('flex flex-col lg:overflow-y-auto', mobileView === 'map' && 'max-lg:hidden')} aria-label="Результаты поиска">
         <div className="flex flex-col gap-3 border-b border-line bg-concrete px-4 pt-5 pb-4">

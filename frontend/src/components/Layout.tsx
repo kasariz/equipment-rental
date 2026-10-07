@@ -9,7 +9,7 @@ import { Logo } from './Logo'
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   cn(
-    'rounded-sm px-1 py-1 text-[15px] transition-colors hover:text-ink',
+    'shrink-0 whitespace-nowrap rounded-sm px-1 py-1 text-[15px] transition-colors hover:text-ink',
     isActive ? 'text-ink font-medium underline decoration-signal decoration-[3px] underline-offset-8' : 'text-steel',
   )
 
@@ -115,7 +115,7 @@ export function Layout() {
           <UserArea />
         </div>
         {/* На телефоне навигация — отдельной прокручиваемой строкой под шапкой */}
-        <NavLinks className="flex gap-5 overflow-x-auto border-t border-line px-4 py-2 md:hidden" />
+        <NavLinks className="flex gap-5 overflow-x-auto border-t border-line px-4 py-2 [scrollbar-width:none] md:hidden" />
       </header>
 
       <main className="flex-1">

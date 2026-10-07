@@ -21,7 +21,7 @@ export function EquipmentCard({ item, active, onHover, ref }: Props) {
       onMouseLeave={() => onHover?.(null)}
       onFocus={() => onHover?.(item.id)}
       className={cn(
-        'grid grid-cols-[112px_1fr] gap-4 rounded-lg border bg-paper p-3 transition-colors sm:grid-cols-[136px_1fr]',
+        'grid grid-cols-[112px_minmax(0,1fr)] gap-4 rounded-lg border bg-paper p-3 transition-colors sm:grid-cols-[136px_minmax(0,1fr)]',
         active ? 'border-ink' : 'border-transparent hover:border-line',
       )}
     >

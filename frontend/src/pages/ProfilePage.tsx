@@ -25,9 +25,9 @@ export function ProfilePage() {
 
       <dl className="mt-8 divide-y divide-line rounded-xl border border-line bg-paper">
         {rows.map(([term, value]) => (
-          <div key={term} className="grid gap-1 px-5 py-4 sm:grid-cols-[180px_1fr]">
+          <div key={term} className="grid grid-cols-1 gap-1 px-5 py-4 sm:grid-cols-[180px_minmax(0,1fr)]">
             <dt className="text-sm text-steel">{term}</dt>
-            <dd>{value}</dd>
+            <dd className="break-words">{value}</dd>
           </div>
         ))}
       </dl>

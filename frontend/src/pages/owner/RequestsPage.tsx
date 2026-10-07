@@ -37,7 +37,7 @@ function RequestCard({ b }: { b: Booking }) {
   const showPhone = b.status === 'pending' || b.status === 'confirmed' || b.status === 'active'
 
   return (
-    <li className="grid gap-4 rounded-xl border border-line bg-paper p-4 sm:p-5 md:grid-cols-[1fr_auto]">
+    <li className="grid grid-cols-1 gap-4 rounded-xl border border-line bg-paper p-4 sm:p-5 md:grid-cols-[minmax(0,1fr)_auto]">
       <div className="flex min-w-0 flex-col gap-2">
         <span className={cn('self-start rounded-full px-2.5 py-0.5 text-xs font-medium', bookingStatusStyle[b.status])}>
           {bookingStatusForOwner[b.status]}
@@ -51,7 +51,7 @@ function RequestCard({ b }: { b: Booking }) {
         </p>
         <p className="font-semibold">{formatRub(b.total_price)}</p>
 
-        <dl className="mt-1 grid gap-x-4 gap-y-1 text-sm sm:grid-cols-[auto_1fr]">
+        <dl className="mt-1 grid gap-x-4 gap-y-1 text-sm sm:grid-cols-[auto_minmax(0,1fr)]">
           <dt className="text-steel">Клиент</dt>
           <dd>{b.client?.full_name}</dd>
           {b.delivery_address && (
@@ -63,7 +63,7 @@ function RequestCard({ b }: { b: Booking }) {
           {b.comment && (
             <>
               <dt className="text-steel">Комментарий</dt>
-              <dd className="whitespace-pre-line">{b.comment}</dd>
+              <dd className="whitespace-pre-line break-words">{b.comment}</dd>
             </>
           )}
           {b.reject_reason && (

@@ -19,7 +19,7 @@ function BookingCard({ b, now }: { b: Booking; now: number }) {
   const canCancel = (b.status === 'pending' || b.status === 'confirmed') && new Date(b.start).getTime() > now
 
   return (
-    <li className="grid gap-4 rounded-xl border border-line bg-paper p-4 sm:grid-cols-[140px_1fr] sm:p-5">
+    <li className="grid grid-cols-1 gap-4 rounded-xl border border-line bg-paper p-4 sm:grid-cols-[140px_minmax(0,1fr)] sm:p-5">
       <EquipmentImage src={b.equipment.cover_url} alt={b.equipment.name} className="aspect-[4/3] w-full rounded-md max-sm:hidden" />
       <div className="flex min-w-0 flex-col gap-2">
         <span className={cn('self-start rounded-full px-2.5 py-0.5 text-xs font-medium', bookingStatusStyle[b.status])}>

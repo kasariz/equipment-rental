@@ -129,7 +129,7 @@ export function EquipmentPage() {
         </p>
       )}
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px] lg:items-start">
+      <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
         <div className="flex flex-col gap-10">
           <Gallery item={item} />
 

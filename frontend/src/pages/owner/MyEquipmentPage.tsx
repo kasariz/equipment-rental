@@ -46,7 +46,7 @@ export function MyEquipmentPage() {
       {items && items.length > 0 && (
         <ul className="mt-8 divide-y divide-line rounded-xl border border-line bg-paper">
           {items.map((item) => (
-            <li key={item.id} className="grid grid-cols-[96px_1fr] gap-4 p-4 sm:grid-cols-[120px_1fr_auto] sm:items-center">
+            <li key={item.id} className="grid grid-cols-[96px_minmax(0,1fr)] gap-4 p-4 sm:grid-cols-[120px_minmax(0,1fr)_auto] sm:items-center">
               <EquipmentImage src={item.cover_url} alt={item.name} className="aspect-[4/3] w-full rounded-md" />
               <div className="min-w-0">
                 <Link to={`/equipment/${item.id}`} className="rounded-sm font-semibold hover:underline">
