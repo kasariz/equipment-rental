@@ -3,7 +3,8 @@
 Бэкенд сервиса аренды спецтехники: каталог техники на карте, бронирование по часам и сменам,
 опционально с оператором и доставкой на объект.
 
-**Бэкенд:** FastAPI, SQLAlchemy 2.0 (async), PostgreSQL 16, Alembic, Docker\n\n**Фронтенд:** React, TypeScript, Vite, Tailwind CSS, TanStack Query, React Router, react-hook-form + zod
+**Бэкенд:** FastAPI, SQLAlchemy 2.0 (async), PostgreSQL 16, Alembic, Docker
+**Фронтенд:** React, TypeScript, Vite, Tailwind CSS, TanStack Query, React Router, react-hook-form + zod
 
 ## Запуск (Windows, PowerShell)
 
