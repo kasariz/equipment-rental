@@ -5,6 +5,7 @@ import { EquipmentCard } from '@/components/EquipmentCard'
 import { EquipmentMap } from '@/components/map/EquipmentMap'
 import { PageSpinner } from '@/components/PageSpinner'
 import { Button } from '@/components/ui/button'
+import { HorizontalScroller } from '@/components/ui/horizontal-scroller'
 import { Input } from '@/components/ui/input'
 import { useCategories, useEquipmentList } from '@/features/catalog/api'
 import { useCatalogFilters, type CatalogFilters } from '@/features/catalog/useCatalogFilters'
@@ -52,7 +53,7 @@ function CategoryChips({ value, onChange }: { value: string; onChange: (slug: st
       active ? 'border-ink bg-ink text-paper' : 'border-line bg-paper hover:border-ink',
     )
   return (
-    <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]" role="group" aria-label="Категория">
+    <HorizontalScroller className="gap-2" fadeFrom="from-concrete" label="Категория">
       <button type="button" className={chip(!value)} aria-pressed={!value} onClick={() => onChange('')}>
         Вся техника
       </button>
@@ -67,7 +68,7 @@ function CategoryChips({ value, onChange }: { value: string; onChange: (slug: st
           {c.name}
         </button>
       ))}
-    </div>
+    </HorizontalScroller>
   )
 }
 

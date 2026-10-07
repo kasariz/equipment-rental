@@ -74,23 +74,9 @@ export async function uploadPhotos(equipmentId: number, files: File[]): Promise<
   return data as Photo[]
 }
 
-export function useUploadPhotos(equipmentId: number) {
-  const invalidate = useInvalidateEquipment()
-  return useMutation({
-    mutationFn: (files: File[]) => uploadPhotos(equipmentId, files),
-    onSuccess: invalidate,
+export async function deletePhoto(equipmentId: number, photoId: number): Promise<void> {
+  const { error, response } = await api.DELETE('/api/equipment/{equipment_id}/photos/{photo_id}', {
+    params: { path: { equipment_id: equipmentId, photo_id: photoId } },
   })
-}
-
-export function useDeletePhoto(equipmentId: number) {
-  const invalidate = useInvalidateEquipment()
-  return useMutation({
-    mutationFn: async (photoId: number) => {
-      const { error, response } = await api.DELETE('/api/equipment/{equipment_id}/photos/{photo_id}', {
-        params: { path: { equipment_id: equipmentId, photo_id: photoId } },
-      })
-      if (!response.ok) throw new Error(getErrorMessage(error))
-    },
-    onSuccess: invalidate,
-  })
+  if (!response.ok) throw new Error(getErrorMessage(error, 'Не удалось удалить фото'))
 }

@@ -9,6 +9,7 @@ import { EquipmentImage } from '@/components/EquipmentImage'
 import { TILE_ATTRIBUTION, TILE_URL } from '@/components/map/constants'
 import { PageSpinner } from '@/components/PageSpinner'
 import { Button } from '@/components/ui/button'
+import { HorizontalScroller } from '@/components/ui/horizontal-scroller'
 import { useMe } from '@/features/auth/api'
 import { useEquipment } from '@/features/catalog/api'
 import { formatRub, statusLabels } from '@/lib/format'
@@ -26,7 +27,8 @@ function Gallery({ item }: { item: Equipment }) {
     <div>
       <EquipmentImage src={current?.url} alt={item.name} className="aspect-[4/3] w-full rounded-xl" />
       {photos.length > 1 && (
-        <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+        <div className="mt-3">
+          <HorizontalScroller className="gap-2" fadeFrom="from-concrete" label="Фото">
           {photos.map((p, i) => (
             <button
               key={p.id}
@@ -42,6 +44,7 @@ function Gallery({ item }: { item: Equipment }) {
               <img src={p.url} alt="" className="aspect-[4/3] w-full object-cover" />
             </button>
           ))}
+          </HorizontalScroller>
         </div>
       )}
     </div>

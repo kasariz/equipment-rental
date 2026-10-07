@@ -1,0 +1,11 @@
+# Единые концы строк (LF) для всего проекта: без предупреждений Git на Windows
+# и без сломанных скриптов в Linux-контейнерах
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary

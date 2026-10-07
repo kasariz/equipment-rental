@@ -4,6 +4,7 @@
 опционально с оператором и доставкой на объект.
 
 **Бэкенд:** FastAPI, SQLAlchemy 2.0 (async), PostgreSQL 16, Alembic, Docker
+
 **Фронтенд:** React, TypeScript, Vite, Tailwind CSS, TanStack Query, React Router, react-hook-form + zod
 
 ## Запуск (Windows, PowerShell)

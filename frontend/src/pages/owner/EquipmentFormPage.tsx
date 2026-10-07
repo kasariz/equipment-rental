@@ -1,11 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useQueryClient } from '@tanstack/react-query'
 import { ImagePlus, Plus, Trash2, X } from 'lucide-react'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form'
 import { Link, useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
 import { z } from 'zod'
-import type { Equipment, EquipmentStatus } from '@/api/client'
+import type { Equipment, EquipmentStatus, Photo } from '@/api/client'
 import { LocationPicker } from '@/components/map/LocationPicker'
 import { PageSpinner } from '@/components/PageSpinner'
 import { Button } from '@/components/ui/button'
@@ -13,15 +14,13 @@ import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { useCategories, useEquipment } from '@/features/catalog/api'
 import {
+  deletePhoto,
   uploadPhotos,
   useCreateEquipment,
-  useDeletePhoto,
   useUpdateEquipment,
-  useUploadPhotos,
   type EquipmentCreateBody,
 } from '@/features/owner/api'
 import { statusLabels } from '@/lib/format'
-import { cn } from '@/lib/utils'
 import { NotFoundPage } from '../NotFoundPage'
 
 const MAX_PHOTOS = 10
@@ -126,39 +125,38 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
   )
 }
 
-/** Фото до создания техники: храним файлы в браузере и загружаем после сохранения */
-function PendingPhotos({ files, onChange }: { files: File[]; onChange: (f: File[]) => void }) {
-  const previews = useMemo(() => files.map((f) => URL.createObjectURL(f)), [files])
+/**
+ * Фото в форме: уже сохранённые и новые вперемешку.
+ * Ничего не уходит на сервер, пока не нажата кнопка сохранения — так же, как с текстовыми полями.
+ */
+function PhotosEditor({
+  saved,
+  newFiles,
+  onRemoveSaved,
+  onChangeNew,
+}: {
+  saved: Photo[]
+  newFiles: File[]
+  onRemoveSaved: (id: number) => void
+  onChangeNew: (files: File[]) => void
+}) {
+  const previews = useMemo(() => newFiles.map((f) => URL.createObjectURL(f)), [newFiles])
   useEffect(() => () => previews.forEach((url) => URL.revokeObjectURL(url)), [previews])
+  const free = MAX_PHOTOS - saved.length - newFiles.length
 
   return (
     <PhotoGrid
-      photos={previews.map((url, i) => ({ key: url, url, onRemove: () => onChange(files.filter((_, j) => j !== i)) }))}
-      canAdd={files.length < MAX_PHOTOS}
-      onAdd={(added) => onChange([...files, ...added].slice(0, MAX_PHOTOS))}
-    />
-  )
-}
-
-/** Фото уже созданной техники: загружаются и удаляются сразу */
-function SavedPhotos({ item }: { item: Equipment }) {
-  const upload = useUploadPhotos(item.id)
-  const remove = useDeletePhoto(item.id)
-  return (
-    <PhotoGrid
-      busy={upload.isPending}
-      photos={item.photos.map((p) => ({
-        key: String(p.id),
-        url: p.url,
-        onRemove: () => remove.mutate(p.id, { onError: (e) => toast.error(e.message) }),
-      }))}
-      canAdd={item.photos.length < MAX_PHOTOS}
-      onAdd={(files) =>
-        upload.mutate(files.slice(0, MAX_PHOTOS - item.photos.length), {
-          onSuccess: () => toast.success('Фото загружены'),
-          onError: (e) => toast.error(e.message),
-        })
-      }
+      photos={[
+        ...saved.map((p) => ({ key: `saved-${p.id}`, url: p.url, onRemove: () => onRemoveSaved(p.id) })),
+        ...previews.map((url, i) => ({
+          key: url,
+          url,
+          isNew: true,
+          onRemove: () => onChangeNew(newFiles.filter((_, j) => j !== i)),
+        })),
+      ]}
+      canAdd={free > 0}
+      onAdd={(added) => onChangeNew([...newFiles, ...added.slice(0, free)])}
     />
   )
 }
@@ -167,12 +165,10 @@ function PhotoGrid({
   photos,
   canAdd,
   onAdd,
-  busy,
 }: {
-  photos: { key: string; url: string; onRemove: () => void }[]
+  photos: { key: string; url: string; isNew?: boolean; onRemove: () => void }[]
   canAdd: boolean
   onAdd: (files: File[]) => void
-  busy?: boolean
 }) {
   return (
     <div>
@@ -180,8 +176,10 @@ function PhotoGrid({
         {photos.map((p, i) => (
           <li key={p.key} className="relative">
             <img src={p.url} alt={`Фото ${i + 1}`} className="aspect-[4/3] w-full rounded-md object-cover" />
-            {i === 0 && (
-              <span className="absolute bottom-2 left-2 rounded bg-ink/80 px-2 py-0.5 text-xs text-paper">Обложка</span>
+            {(i === 0 || p.isNew) && (
+              <span className="absolute bottom-2 left-2 rounded bg-ink/80 px-2 py-0.5 text-xs text-paper">
+                {i === 0 ? 'Обложка' : 'Новое'}
+              </span>
             )}
             <button
               type="button"
@@ -196,13 +194,10 @@ function PhotoGrid({
         {canAdd && (
           <li>
             <label
-              className={cn(
-                'flex aspect-[4/3] cursor-pointer flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed border-line text-sm text-steel transition-colors hover:border-ink hover:text-ink has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ink',
-                busy && 'pointer-events-none opacity-60',
-              )}
+              className="flex aspect-[4/3] cursor-pointer flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed border-line text-sm text-steel transition-colors hover:border-ink hover:text-ink has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ink"
             >
               <ImagePlus className="size-6" aria-hidden />
-              {busy ? 'Загружаем…' : 'Добавить фото'}
+              Добавить фото
               <input
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
@@ -229,8 +224,10 @@ function EquipmentForm({ item }: { item?: Equipment }) {
   const { data: categories } = useCategories()
   const create = useCreateEquipment()
   const update = useUpdateEquipment(item?.id ?? 0)
-  const [pendingFiles, setPendingFiles] = useState<File[]>([])
-  const [uploading, setUploading] = useState(false)
+  const queryClient = useQueryClient()
+  const [newFiles, setNewFiles] = useState<File[]>([])
+  const [removedPhotoIds, setRemovedPhotoIds] = useState<number[]>([])
+  const [savingPhotos, setSavingPhotos] = useState(false)
 
   const { register, control, handleSubmit, reset, formState: { errors, isDirty } } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -239,34 +236,48 @@ function EquipmentForm({ item }: { item?: Equipment }) {
   const specs = useFieldArray({ control, name: 'specs' })
   const operatorAvailable = useWatch({ control, name: 'operator_available' })
 
+  const savedPhotos = item?.photos.filter((p) => !removedPhotoIds.includes(p.id)) ?? []
+  const photosChanged = newFiles.length > 0 || removedPhotoIds.length > 0
+
   const onSubmit = async (values: FormValues) => {
     const body = toBody(values)
+
     if (item) {
-      update.mutate(
-        { ...body, status: values.status },
-        {
-          onSuccess: () => {
-            reset(values) // сохранённое становится новой точкой отсчёта для «есть изменения»
-            toast.success('Изменения сохранены')
-          },
-          onError: (e) => toast.error(e.message),
-        },
-      )
+      try {
+        if (isDirty) await update.mutateAsync({ ...body, status: values.status })
+        if (photosChanged) {
+          setSavingPhotos(true)
+          // Сначала удаляем: иначе можно упереться в лимит 10 фото при замене снимков
+          for (const id of removedPhotoIds) await deletePhoto(item.id, id)
+          if (newFiles.length) await uploadPhotos(item.id, newFiles)
+        }
+        reset(values) // сохранённое становится новой точкой отсчёта для «есть изменения»
+        setNewFiles([])
+        setRemovedPhotoIds([])
+        toast.success('Изменения сохранены')
+      } catch (e) {
+        toast.error((e as Error).message)
+      } finally {
+        setSavingPhotos(false)
+        await queryClient.invalidateQueries({ queryKey: ['equipment'] })
+      }
       return
     }
+
     try {
       const created = await create.mutateAsync(body)
-      if (pendingFiles.length) {
-        setUploading(true)
+      if (newFiles.length) {
+        setSavingPhotos(true)
         try {
-          await uploadPhotos(created.id, pendingFiles)
+          await uploadPhotos(created.id, newFiles)
         } catch (e) {
           toast.error(`Техника сохранена, но фото не загрузились: ${(e as Error).message}`)
           navigate(`/my/equipment/${created.id}/edit`, { replace: true })
           return
         } finally {
-          setUploading(false)
+          setSavingPhotos(false)
         }
+        await queryClient.invalidateQueries({ queryKey: ['equipment'] })
       }
       toast.success('Техника добавлена')
       navigate('/my/equipment')
@@ -275,7 +286,7 @@ function EquipmentForm({ item }: { item?: Equipment }) {
     }
   }
 
-  const saving = create.isPending || update.isPending || uploading
+  const saving = create.isPending || update.isPending || savingPhotos
   const err = (id: string, message?: string) => ({
     'aria-invalid': Boolean(message),
     'aria-describedby': message ? `${id}-error` : undefined,
@@ -319,7 +330,12 @@ function EquipmentForm({ item }: { item?: Equipment }) {
       </Section>
 
       <Section title="Фото" hint="С фото объявление выглядит надёжнее">
-        {item ? <SavedPhotos item={item} /> : <PendingPhotos files={pendingFiles} onChange={setPendingFiles} />}
+        <PhotosEditor
+          saved={savedPhotos}
+          newFiles={newFiles}
+          onRemoveSaved={(id) => setRemovedPhotoIds((ids) => [...ids, id])}
+          onChangeNew={setNewFiles}
+        />
       </Section>
 
       <Section title="Цены">
@@ -410,7 +426,7 @@ function EquipmentForm({ item }: { item?: Equipment }) {
       </Section>
 
       <div className="sticky bottom-0 z-[1001] -mx-4 flex flex-wrap items-center gap-3 border-t border-line bg-concrete/95 px-4 py-4 backdrop-blur sm:-mx-6 sm:px-6">
-        <Button type="submit" size="lg" disabled={saving || (isEdit && !isDirty)}>
+        <Button type="submit" size="lg" disabled={saving || (isEdit && !isDirty && !photosChanged)}>
           {saving ? 'Сохраняем…' : isEdit ? 'Сохранить изменения' : 'Добавить технику'}
         </Button>
         <Button asChild variant="ghost" size="lg">

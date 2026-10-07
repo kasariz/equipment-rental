@@ -4,6 +4,7 @@ import { Link, useLocation } from 'react-router'
 import type { Equipment, RateType } from '@/api/client'
 import { Button } from '@/components/ui/button'
 import { Field } from '@/components/ui/field'
+import { HorizontalScroller } from '@/components/ui/horizontal-scroller'
 import { Input } from '@/components/ui/input'
 import { useMe } from '@/features/auth/api'
 import { useNow } from '@/hooks/useNow'
@@ -197,9 +198,10 @@ export function BookingForm({ item }: { item: Equipment }) {
       )}
 
       {/* День */}
-      <fieldset>
+      {/* min-w-0: по умолчанию fieldset растягивается под содержимое и ломает прокрутку */}
+      <fieldset className="min-w-0">
         <legend className="mb-1.5 text-sm font-medium">День начала</legend>
-        <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-2">
+        <HorizontalScroller className="gap-1.5">
           {days.map(({ date, hasStart }) => {
             const active = selectedDay?.date.getTime() === date.getTime()
             return (
@@ -222,7 +224,7 @@ export function BookingForm({ item }: { item: Equipment }) {
               </button>
             )
           })}
-        </div>
+        </HorizontalScroller>
       </fieldset>
 
       {/* Время */}
