@@ -1,0 +1,108 @@
+@import "tailwindcss";
+@import "@fontsource-variable/onest";
+@import "@fontsource-variable/unbounded";
+
+@theme {
+  /* Палитра стройплощадки: бетон, графит, сигнальный жёлтый */
+  --color-concrete: #e3e5e1;
+  --color-paper: #f6f7f4;
+  --color-line: #c6cbc4;
+  --color-ink: #1c272d;
+  --color-steel: #52677a;
+  --color-signal: #f2b705;
+  --color-signal-dark: #d4a000;
+  --color-danger: #b42318;
+  --color-success: #2f6b3a;
+
+  --font-sans: "Onest Variable", system-ui, sans-serif;
+  --font-display: "Unbounded Variable", "Onest Variable", system-ui, sans-serif;
+}
+
+@layer base {
+  html {
+    @apply bg-concrete text-ink antialiased;
+    font-family: var(--font-sans);
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-ink;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@utility hazard-stripe {
+  background-image: repeating-linear-gradient(
+    135deg,
+    var(--color-signal) 0 14px,
+    var(--color-ink) 14px 28px
+  );
+}
+
+/* ---------- Карта ---------- */
+
+.leaflet-container {
+  font-family: var(--font-sans);
+  background: var(--color-concrete);
+}
+
+/* Метка с ценой: якорь в точке техники, «хвостик» указывает вниз */
+.price-pin-anchor {
+  background: none;
+  border: none;
+}
+
+.price-pin {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, calc(-100% - 7px));
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 2px solid var(--color-paper);
+  background: var(--color-ink);
+  color: var(--color-paper);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgb(28 39 45 / 0.35);
+  cursor: pointer;
+  transition: transform 120ms ease, background-color 120ms ease;
+}
+
+.price-pin::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -7px;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--color-ink);
+}
+
+.price-pin.is-active {
+  background: var(--color-signal);
+  color: var(--color-ink);
+  transform: translate(-50%, calc(-100% - 7px)) scale(1.12);
+}
+
+.price-pin.is-active::after {
+  border-top-color: var(--color-signal);
+}
+
+.user-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #2563eb;
+  border: 3px solid white;
+  box-shadow: 0 0 0 6px rgb(37 99 235 / 0.25);
+}
