@@ -19,6 +19,7 @@ from app.models import (
     Equipment,
     EquipmentPhoto,
     EquipmentStatus,
+    Favorite,
     User,
     UserRole,
 )
@@ -38,7 +39,7 @@ from app.services.ratings import owner_rating, ratings_subquery
 router = APIRouter(tags=["catalog"])
 
 # Брони, которые занимают технику (совпадает с условием ограничения bookings_no_overlap)
-BLOCKING_STATUSES = (BookingStatus.pending, BookingStatus.confirmed, BookingStatus.active)
+BLOCKING_STATUSES = (BookingStatus.pending, BookingStatus.confirmed, BookingStatus.active, BookingStatus.blocked)
 
 
 # ---------- вспомогательное ----------
@@ -72,6 +73,20 @@ async def to_read(session: AsyncSession, eq: Equipment) -> EquipmentRead:
     item.owner.rating, item.owner.reviews_count = await owner_rating(session, eq.owner_id)
     item.owner_rating, item.owner_reviews_count = item.owner.rating, item.owner.reviews_count
     return item
+
+
+async def mark_favorites(session: AsyncSession, user: User | None, items: list) -> None:
+    if user is None or not items:
+        return
+    ids = set(
+        await session.scalars(
+            select(Favorite.equipment_id).where(
+                Favorite.user_id == user.id, Favorite.equipment_id.in_([i.id for i in items])
+            )
+        )
+    )
+    for item in items:
+        item.is_favorite = item.id in ids
 
 
 async def load_equipment(session: AsyncSession, equipment_id: int) -> Equipment | None:
@@ -115,6 +130,11 @@ class EquipmentFilters(BaseModel):
     lat: float | None = Field(default=None, ge=-90, le=90)
     lon: float | None = Field(default=None, ge=-180, le=180)
     radius_km: float | None = Field(default=None, gt=0, le=500)
+    # Видимая область карты: «искать в этой области»
+    min_lat: float | None = Field(default=None, ge=-90, le=90)
+    max_lat: float | None = Field(default=None, ge=-90, le=90)
+    min_lon: float | None = Field(default=None, ge=-180, le=180)
+    max_lon: float | None = Field(default=None, ge=-180, le=180)
     available_from: datetime | None = None
     available_to: datetime | None = None
     sort: SortOption = "new"
@@ -128,6 +148,9 @@ class EquipmentFilters(BaseModel):
             raise ValueError("Передайте и lat, и lon")
         if (self.radius_km is not None or self.sort == "distance") and not has_point:
             raise ValueError("Для поиска по расстоянию нужна точка: lat и lon")
+        box = (self.min_lat, self.max_lat, self.min_lon, self.max_lon)
+        if any(v is not None for v in box) and any(v is None for v in box):
+            raise ValueError("Для поиска в области карты нужны все четыре границы")
         if (self.available_from is None) != (self.available_to is None):
             raise ValueError("Передайте обе даты: available_from и available_to")
         if self.available_from and self.available_to:
@@ -144,7 +167,9 @@ async def list_categories(session: SessionDep) -> list[Category]:
 
 
 @router.get("/equipment", response_model=EquipmentPage)
-async def list_equipment(session: SessionDep, filters: Annotated[EquipmentFilters, Query()]) -> EquipmentPage:
+async def list_equipment(
+    session: SessionDep, filters: Annotated[EquipmentFilters, Query()], user: OptionalUser
+) -> EquipmentPage:
     f = filters
     conditions: list[ColumnElement[bool]] = [Equipment.status == EquipmentStatus.available]
 
@@ -154,6 +179,12 @@ async def list_equipment(session: SessionDep, filters: Annotated[EquipmentFilter
         conditions.append(Equipment.name.icontains(f.q.strip(), autoescape=True))
     if f.price_max is not None:
         conditions.append(Equipment.price_per_hour <= f.price_max)
+
+    if f.min_lat is not None:
+        conditions += [
+            Equipment.latitude.between(f.min_lat, f.max_lat),
+            Equipment.longitude.between(f.min_lon, f.max_lon),
+        ]
 
     dist = distance_km(f.lat, f.lon) if f.lat is not None and f.lon is not None else None
     if dist is not None and f.radius_km is not None:
@@ -196,7 +227,9 @@ async def list_equipment(session: SessionDep, filters: Annotated[EquipmentFilter
         .offset(f.offset)
     )
     rows = (await session.execute(stmt)).all()
-    return EquipmentPage(items=[to_list_item(eq, d, r, c) for eq, d, r, c in rows], total=total)
+    items = [to_list_item(eq, d, r, c) for eq, d, r, c in rows]
+    await mark_favorites(session, user, items)
+    return EquipmentPage(items=items, total=total)
 
 
 @router.get("/equipment/{equipment_id}", response_model=EquipmentRead)
@@ -205,7 +238,38 @@ async def get_equipment(equipment_id: int, session: SessionDep, user: OptionalUs
     # Снятую с размещения технику видят только владелец и админ
     if eq is None or (eq.status != EquipmentStatus.available and not can_manage(user, eq)):
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Техника не найдена")
-    return await to_read(session, eq)
+    item = await to_read(session, eq)
+    await mark_favorites(session, user, [item])
+    return item
+
+
+@router.get("/equipment/{equipment_id}/similar", response_model=list[EquipmentListItem])
+async def similar_equipment(
+    equipment_id: int, session: SessionDep, user: OptionalUser, limit: int = Query(default=6, ge=1, le=20)
+) -> list[EquipmentListItem]:
+    """Та же категория, сначала ближайшая к этой технике"""
+    eq = await session.get(Equipment, equipment_id)
+    if eq is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Техника не найдена")
+    dist = distance_km(eq.latitude, eq.longitude)
+    ratings = ratings_subquery()
+    rows = (
+        await session.execute(
+            select(Equipment, dist, ratings.c.rating, ratings.c.reviews_count)
+            .outerjoin(ratings, ratings.c.subject_id == Equipment.owner_id)
+            .where(
+                Equipment.category_id == eq.category_id,
+                Equipment.id != eq.id,
+                Equipment.status == EquipmentStatus.available,
+            )
+            .options(selectinload(Equipment.category), selectinload(Equipment.photos))
+            .order_by(dist, Equipment.id)
+            .limit(limit)
+        )
+    ).all()
+    items = [to_list_item(e, d, r, c) for e, d, r, c in rows]
+    await mark_favorites(session, user, items)
+    return items
 
 
 # ---------- кабинет владельца ----------
@@ -274,7 +338,13 @@ async def update_equipment(
 async def delete_equipment(equipment_id: int, session: SessionDep, user: OwnerUser) -> None:
     eq = await get_managed_equipment(session, equipment_id, user)
     has_bookings = await session.scalar(
-        select(exists().where(Booking.equipment_id == eq.id, Booking.status.in_(BLOCKING_STATUSES)))
+        select(
+            exists().where(
+                Booking.equipment_id == eq.id,
+                Booking.status.in_(BLOCKING_STATUSES),
+                Booking.status != BookingStatus.blocked,
+            )
+        )
     )
     if has_bookings:
         raise HTTPException(

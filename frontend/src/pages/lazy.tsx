@@ -17,3 +17,5 @@ export const RequestsPage = lazy(() =>
   import('@/pages/owner/RequestsPage').then((m) => ({ default: m.RequestsPage })),
 )
 export const AdminPage = lazy(() => import('@/pages/admin/AdminPage').then((m) => ({ default: m.AdminPage })))
+export const FavoritesPage = lazy(() => import('@/pages/FavoritesPage').then((m) => ({ default: m.FavoritesPage })))
+export const CalendarPage = lazy(() => import('@/pages/owner/CalendarPage').then((m) => ({ default: m.CalendarPage })))

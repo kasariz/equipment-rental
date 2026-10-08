@@ -34,6 +34,7 @@ from app.models import (
 from app.schemas.booking import BookingRead
 from app.schemas.equipment import CategoryRead, SpecTemplateItem
 from app.schemas.review import ReviewRead
+from app.services import password_reset
 from app.services.media import delete_equipment_photo_file
 from app.services.slug import slugify
 
@@ -247,6 +248,7 @@ async def list_bookings(
         select(Booking)
         .join(Booking.equipment)
         .join(Booking.user)
+        .where(Booking.status != BookingStatus.blocked)
         .options(*booking_options())
         .order_by(Booking.created_at.desc(), Booking.id.desc())
     )
@@ -404,3 +406,18 @@ async def delete_category(category_id: int, session: SessionDep, _: AdminUser) -
         )
     await session.delete(category)
     await session.commit()
+
+
+class ResetLink(BaseModel):
+    url: str
+
+
+@router.post("/users/{user_id}/reset-link", response_model=ResetLink)
+async def make_reset_link(user_id: int, session: SessionDep, _: AdminUser) -> ResetLink:
+    """Если у пользователя нет ни почты на сервере, ни Telegram — админ выдаёт ссылку сам, например по телефону"""
+    user = await session.get(User, user_id)
+    if user is None:
+        raise not_found("Пользователь")
+    url = password_reset.issue_code(user)
+    await session.commit()
+    return ResetLink(url=url)

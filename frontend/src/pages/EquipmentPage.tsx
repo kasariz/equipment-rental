@@ -5,7 +5,10 @@ import type { Equipment } from '@/api/client'
 import { BookingForm } from '@/components/booking/BookingForm'
 import { EquipmentImage } from '@/components/EquipmentImage'
 import { PointMap } from '@/components/map/PointMap'
+import { EquipmentCard } from '@/components/EquipmentCard'
+import { FavoriteButton } from '@/components/FavoriteButton'
 import { OwnerReviews } from '@/components/OwnerReviews'
+import { useSimilar } from '@/features/favorites/api'
 import { PageSpinner } from '@/components/PageSpinner'
 import { Stars } from '@/components/Stars'
 import { Button } from '@/components/ui/button'
@@ -98,6 +101,23 @@ function PricePanel({ item, isOwner }: { item: Equipment; isOwner: boolean }) {
   )
 }
 
+function SimilarEquipment({ id }: { id: number }) {
+  const { data } = useSimilar(id)
+  if (!data?.length) return null
+  return (
+    <section>
+      <h2 className="font-display text-xl font-semibold">Похожая техника рядом</h2>
+      <ul className="mt-4 grid grid-cols-1 gap-2">
+        {data.slice(0, 4).map((s) => (
+          <li key={s.id}>
+            <EquipmentCard item={s} />
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
+
 export function EquipmentPage() {
   const id = Number(useParams().id)
   const { data: item, isPending, isError } = useEquipment(id)
@@ -127,7 +147,10 @@ export function EquipmentPage() {
         </p>
       )}
 
-      <h1 className="font-display mt-3 text-3xl leading-tight font-semibold tracking-tight sm:text-4xl">{item.name}</h1>
+      <div className="mt-3 flex items-start justify-between gap-4">
+        <h1 className="font-display text-3xl leading-tight font-semibold tracking-tight sm:text-4xl">{item.name}</h1>
+        <FavoriteButton id={item.id} active={item.is_favorite} className="mt-1 shrink-0 border border-line" />
+      </div>
       {item.address && (
         <p className="mt-2 flex items-center gap-1.5 text-steel">
           <MapPin className="size-4 shrink-0" aria-hidden />
@@ -159,6 +182,8 @@ export function EquipmentPage() {
               <p className="mt-4 max-w-prose whitespace-pre-line">{item.description}</p>
             </section>
           )}
+
+          <SimilarEquipment id={item.id} />
 
           <div id="reviews" className="scroll-mt-6">
             <OwnerReviews ownerId={item.owner.id} ownerName={item.owner.full_name} />

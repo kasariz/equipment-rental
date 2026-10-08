@@ -14,6 +14,8 @@ class UserCreate(BaseModel):
     phone: Phone | None = None
     # Админа через регистрацию создать нельзя
     role: Literal[UserRole.client, UserRole.owner] = UserRole.client
+    # 152-ФЗ: без согласия на обработку персональных данных регистрировать нельзя
+    consent: Literal[True] = Field(description="Согласие на обработку персональных данных")
 
     @field_validator("email")
     @classmethod
@@ -54,3 +56,16 @@ class UserRead(BaseModel):
     role: UserRole
     created_at: datetime
     telegram_connected: bool
+
+
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+
+
+class PasswordResetConfirm(BaseModel):
+    token: str = Field(min_length=10, max_length=100)
+    password: str = Field(min_length=8, max_length=128)
+
+
+class AccountDelete(BaseModel):
+    password: str

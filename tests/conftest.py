@@ -10,6 +10,7 @@ import tempfile
 # Окружение задаём до импорта приложения: настройки читаются при импорте
 os.environ["POSTGRES_DB"] = os.environ.get("TEST_POSTGRES_DB", "rental_test")
 os.environ["TELEGRAM_BOT_TOKEN"] = ""
+os.environ["RATE_LIMIT_ENABLED"] = "false"  # иначе быстро упрёмся в лимит регистраций с одного адреса
 os.environ["MEDIA_DIR"] = tempfile.mkdtemp(prefix="rental-test-media-")
 
 import asyncio
@@ -79,7 +80,7 @@ async def make_client(db: None) -> AsyncIterator[ClientFactory]:
         if email:
             r = await c.post(
                 "/api/auth/register",
-                json={"email": email, "password": PASSWORD, "full_name": name, "role": role},
+                json={"email": email, "password": PASSWORD, "full_name": name, "role": role, "consent": True},
             )
             assert r.status_code == 201, r.text
         return c

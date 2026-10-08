@@ -43,6 +43,21 @@ class Settings(BaseSettings):
     yandex_geocoder_api_key: str = ""
     yandex_geocoder_url: str = "https://geocode-maps.yandex.ru/v1/"
 
+    # Письма (восстановление пароля). Без SMTP ссылка уходит только в Telegram или через администратора
+    smtp_host: str = ""
+    smtp_port: int = 465
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_from: str = ""
+    password_reset_ttl_minutes: int = 30
+
+    # Ограничение частоты запросов. В тестах выключается, чтобы регистрировать много пользователей подряд
+    rate_limit_enabled: bool = True
+
+    # Оператор персональных данных — показывается в политике конфиденциальности
+    operator_name: str = ""
+    operator_email: str = ""
+
     # Адрес сайта для кнопок в сообщениях. Telegram не принимает ссылки на localhost,
     # поэтому с локальным адресом кнопки просто не добавляются
     site_url: str = "http://localhost:5173"

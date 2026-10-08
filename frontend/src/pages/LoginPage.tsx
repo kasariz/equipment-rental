@@ -66,6 +66,10 @@ export function LoginPage() {
           {login.isPending ? 'Входим…' : 'Войти'}
         </Button>
 
+        <Link to="/forgot-password" className="self-start text-sm font-medium underline underline-offset-4 hover:decoration-signal">
+          Забыли пароль?
+        </Link>
+
         <p className="text-sm text-steel">
           Нет аккаунта?{' '}
           <Link to="/register" className="font-medium text-ink underline underline-offset-4 hover:decoration-signal">

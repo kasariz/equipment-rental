@@ -72,7 +72,13 @@ def fake_geocoder(monkeypatch: pytest.MonkeyPatch) -> list[dict]:
 async def test_registration_normalizes_phone(anon: httpx.AsyncClient):
     r = await anon.post(
         "/api/auth/register",
-        json={"email": "p@test.ru", "password": PASSWORD, "full_name": "Павел", "phone": "8 (900) 123-45-67"},
+        json={
+            "consent": True,
+            "email": "p@test.ru",
+            "password": PASSWORD,
+            "full_name": "Павел",
+            "phone": "8 (900) 123-45-67",
+        },
     )
     assert r.json()["phone"] == "+79001234567"
 
@@ -81,7 +87,7 @@ async def test_registration_normalizes_phone(anon: httpx.AsyncClient):
 async def test_registration_rejects_bad_phone(anon: httpx.AsyncClient, phone: str):
     r = await anon.post(
         "/api/auth/register",
-        json={"email": "p@test.ru", "password": PASSWORD, "full_name": "Павел", "phone": phone},
+        json={"consent": True, "email": "p@test.ru", "password": PASSWORD, "full_name": "Павел", "phone": phone},
     )
     assert r.status_code == 422
 

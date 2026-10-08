@@ -21,6 +21,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/site-info": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Site Info
+         * @description Сведения об операторе персональных данных для страницы политики и настройки сайта
+         */
+        get: operations["service-site_info"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/register": {
         parameters: {
             query?: never;
@@ -83,6 +103,47 @@ export interface paths {
         get: operations["auth-me"];
         put?: never;
         post?: never;
+        /**
+         * Delete Account
+         * @description Отзыв согласия на обработку данных (152-ФЗ): аккаунт и всё связанное удаляется
+         */
+        delete: operations["auth-delete_account"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/password-reset/request": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Request Password Reset
+         * @description Ответ одинаковый, есть такой email или нет: иначе по нему можно проверять, кто зарегистрирован
+         */
+        post: operations["auth-request_password_reset"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/password-reset/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirm Password Reset */
+        post: operations["auth-confirm_password_reset"];
         delete?: never;
         options?: never;
         head?: never;
@@ -141,6 +202,26 @@ export interface paths {
         head?: never;
         /** Update Equipment */
         patch: operations["catalog-update_equipment"];
+        trace?: never;
+    };
+    "/api/equipment/{equipment_id}/similar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Similar Equipment
+         * @description Та же категория, сначала ближайшая к этой технике
+         */
+        get: operations["catalog-similar_equipment"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/my/equipment": {
@@ -730,10 +811,124 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/users/{user_id}/reset-link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Make Reset Link
+         * @description Если у пользователя нет ни почты на сервере, ни Telegram — админ выдаёт ссылку сам, например по телефону
+         */
+        post: operations["admin-make_reset_link"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/equipment/{equipment_id}/calendar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Equipment Calendar
+         * @description Для владельца: брони и закрытое время с подробностями. Публично доступна только занятость
+         */
+        get: operations["availability-equipment_calendar"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/equipment/{equipment_id}/blocks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Block */
+        post: operations["availability-create_block"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/equipment/{equipment_id}/blocks/{block_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Block */
+        delete: operations["availability-delete_block"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/favorites/{equipment_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Add Favorite */
+        put: operations["favorites-add_favorite"];
+        post?: never;
+        /** Remove Favorite */
+        delete: operations["favorites-remove_favorite"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/my/favorites": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My Favorites */
+        get: operations["favorites-my_favorites"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AccountDelete */
+        AccountDelete: {
+            /** Password */
+            password: string;
+        };
         /** AdminEquipmentRead */
         AdminEquipmentRead: {
             /** Id */
@@ -814,6 +1009,24 @@ export interface components {
              * @default 0
              */
             bookings_count: number;
+        };
+        /** BlockCreate */
+        BlockCreate: {
+            /**
+             * Start
+             * Format: date-time
+             */
+            start: string;
+            /**
+             * End
+             * Format: date-time
+             */
+            end: string;
+            /**
+             * Reason
+             * @description Например: «заказ по телефону», «ТО»
+             */
+            reason?: string | null;
         };
         /** Body_catalog-upload_photos */
         "Body_catalog-upload_photos": {
@@ -936,7 +1149,7 @@ export interface components {
          * BookingStatus
          * @enum {string}
          */
-        BookingStatus: "pending" | "confirmed" | "active" | "completed" | "cancelled" | "rejected" | "expired";
+        BookingStatus: "pending" | "confirmed" | "active" | "completed" | "cancelled" | "rejected" | "expired" | "blocked";
         /** BusyInterval */
         BusyInterval: {
             /**
@@ -949,6 +1162,28 @@ export interface components {
              * Format: date-time
              */
             end: string;
+        };
+        /** CalendarItem */
+        CalendarItem: {
+            /** Id */
+            id: number;
+            /** Kind */
+            kind: string;
+            /**
+             * Start
+             * Format: date-time
+             */
+            start: string;
+            /**
+             * End
+             * Format: date-time
+             */
+            end: string;
+            status: components["schemas"]["BookingStatus"];
+            /** Reason */
+            reason?: string | null;
+            /** Client Name */
+            client_name?: string | null;
         };
         /** CategoryRead */
         CategoryRead: {
@@ -1055,6 +1290,11 @@ export interface components {
              * @default 0
              */
             owner_reviews_count: number;
+            /**
+             * Is Favorite
+             * @default false
+             */
+            is_favorite: boolean;
         };
         /** EquipmentPage */
         EquipmentPage: {
@@ -1094,6 +1334,11 @@ export interface components {
              * @default 0
              */
             owner_reviews_count: number;
+            /**
+             * Is Favorite
+             * @default false
+             */
+            is_favorite: boolean;
             /** Description */
             description: string | null;
             /** Specs */
@@ -1209,6 +1454,21 @@ export interface components {
             /** Total */
             total: number;
         };
+        /** PasswordResetConfirm */
+        PasswordResetConfirm: {
+            /** Token */
+            token: string;
+            /** Password */
+            password: string;
+        };
+        /** PasswordResetRequest */
+        PasswordResetRequest: {
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
+        };
         /** PhotoRead */
         PhotoRead: {
             /** Id */
@@ -1244,6 +1504,11 @@ export interface components {
         RejectBody: {
             /** Reason */
             reason?: string | null;
+        };
+        /** ResetLink */
+        ResetLink: {
+            /** Url */
+            url: string;
         };
         /** ReviewCreate */
         ReviewCreate: {
@@ -1282,6 +1547,15 @@ export interface components {
             author_name: string;
             /** Equipment Name */
             equipment_name: string;
+        };
+        /** SiteInfo */
+        SiteInfo: {
+            /** Operator Name */
+            operator_name: string;
+            /** Operator Email */
+            operator_email: string;
+            /** Password Reset By Email */
+            password_reset_by_email: boolean;
         };
         /**
          * SpecItem
@@ -1334,6 +1608,12 @@ export interface components {
              * @enum {string}
              */
             role: "client" | "owner";
+            /**
+             * Consent
+             * @description Согласие на обработку персональных данных
+             * @constant
+             */
+            consent: true;
         };
         /** UserLogin */
         UserLogin: {
@@ -1428,6 +1708,26 @@ export interface operations {
                     "application/json": {
                         [key: string]: string;
                     };
+                };
+            };
+        };
+    };
+    "service-site_info": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteInfo"];
                 };
             };
         };
@@ -1547,6 +1847,105 @@ export interface operations {
             };
         };
     };
+    "auth-delete_account": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccountDelete"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "auth-request_password_reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordResetRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "auth-confirm_password_reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordResetConfirm"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     "catalog-list_categories": {
         parameters: {
             query?: never;
@@ -1579,6 +1978,10 @@ export interface operations {
                 lat?: number | null;
                 lon?: number | null;
                 radius_km?: number | null;
+                min_lat?: number | null;
+                max_lat?: number | null;
+                min_lon?: number | null;
+                max_lon?: number | null;
                 available_from?: string | null;
                 available_to?: string | null;
                 sort?: "new" | "price_asc" | "price_desc" | "distance";
@@ -1587,7 +1990,9 @@ export interface operations {
             };
             header?: never;
             path?: never;
-            cookie?: never;
+            cookie?: {
+                access_token?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -1734,6 +2139,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EquipmentRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "catalog-similar_equipment": {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                equipment_id: number;
+            };
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EquipmentListItem"][];
                 };
             };
             /** @description Validation Error */
@@ -2904,6 +3344,237 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "admin-make_reset_link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: number;
+            };
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResetLink"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "availability-equipment_calendar": {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+            };
+            header?: never;
+            path: {
+                equipment_id: number;
+            };
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CalendarItem"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "availability-create_block": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                equipment_id: number;
+            };
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BlockCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CalendarItem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "availability-delete_block": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                equipment_id: number;
+                block_id: number;
+            };
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "favorites-add_favorite": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                equipment_id: number;
+            };
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "favorites-remove_favorite": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                equipment_id: number;
+            };
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "favorites-my_favorites": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EquipmentListItem"][];
+                };
             };
             /** @description Validation Error */
             422: {

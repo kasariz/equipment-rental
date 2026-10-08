@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel
 
 from app.api.deps import CurrentUser
+from app.core.ratelimit import limiter
 from app.services import geocoder
 from app.services.geocoder import GeocoderUnavailable, GeoResult
 
@@ -34,7 +35,8 @@ async def geo_status() -> GeoStatus:
 
 # Только для вошедших: у геокодера дневной лимит запросов, анонимы его быстро съедят
 @router.get("/search", response_model=list[GeoSuggestion])
-async def geo_search(_: CurrentUser, q: str = Query(min_length=3, max_length=200)) -> list[GeoSuggestion]:
+async def geo_search(user: CurrentUser, q: str = Query(min_length=3, max_length=200)) -> list[GeoSuggestion]:
+    limiter.hit(f"geo:{user.id}", limit=60, window_seconds=60)
     if not geocoder.enabled():
         raise unavailable()
     try:
@@ -45,8 +47,9 @@ async def geo_search(_: CurrentUser, q: str = Query(min_length=3, max_length=200
 
 @router.get("/reverse", response_model=GeoSuggestion | None)
 async def geo_reverse(
-    _: CurrentUser, lat: float = Query(ge=-90, le=90), lon: float = Query(ge=-180, le=180)
+    user: CurrentUser, lat: float = Query(ge=-90, le=90), lon: float = Query(ge=-180, le=180)
 ) -> GeoSuggestion | None:
+    limiter.hit(f"geo:{user.id}", limit=60, window_seconds=60)
     if not geocoder.enabled():
         raise unavailable()
     try:

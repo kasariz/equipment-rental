@@ -1,9 +1,12 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { toast } from 'sonner'
 import { Stars } from '@/components/Stars'
 import { TelegramConnect } from '@/components/TelegramConnect'
 import { useMyRatings } from '@/features/reviews/api'
 import { Button } from '@/components/ui/button'
+import { PasswordInput } from '@/components/ui/password-input'
+import { useDeleteAccount } from '@/features/account/api'
 import { roleLabels, useLogout, useMe } from '@/features/auth/api'
 import { formatPhone } from '@/lib/phone'
 
@@ -37,6 +40,55 @@ function MyRatings() {
           </div>
         ))}
       </dl>
+    </section>
+  )
+}
+
+function DeleteAccount() {
+  const [password, setPassword] = useState('')
+  const [open, setOpen] = useState(false)
+  const del = useDeleteAccount()
+  const navigate = useNavigate()
+
+  return (
+    <section className="mt-12 border-t border-line pt-8">
+      <h2 className="font-display text-lg font-semibold">Удаление аккаунта</h2>
+      <p className="mt-2 max-w-prose text-sm text-steel">
+        Вместе с аккаунтом удалятся ваша техника, брони и отзывы. Это отзыв согласия на обработку
+        персональных данных, восстановить данные будет нельзя.
+      </p>
+      {!open ? (
+        <Button variant="outline" className="mt-4 border-danger/40 text-danger hover:border-danger" onClick={() => setOpen(true)}>
+          Удалить аккаунт
+        </Button>
+      ) : (
+        <form
+          className="mt-4 flex max-w-sm flex-col gap-3"
+          onSubmit={(e) => {
+            e.preventDefault()
+            del.mutate(password, {
+              onSuccess: () => {
+                toast.success('Аккаунт удалён')
+                navigate('/', { replace: true })
+              },
+              onError: (err) => toast.error(err.message),
+            })
+          }}
+        >
+          <label className="flex flex-col gap-1.5 text-sm font-medium">
+            Для подтверждения введите пароль
+            <PasswordInput autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          </label>
+          <div className="flex gap-2">
+            <Button type="submit" className="bg-danger text-paper hover:bg-danger/90" disabled={!password || del.isPending}>
+              Удалить навсегда
+            </Button>
+            <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
+              Отмена
+            </Button>
+          </div>
+        </form>
+      )}
     </section>
   )
 }
@@ -86,6 +138,8 @@ export function ProfilePage() {
       >
         Выйти из аккаунта
       </Button>
+
+      <DeleteAccount />
     </div>
   )
 }

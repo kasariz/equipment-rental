@@ -4,6 +4,7 @@ import type { EquipmentListItem } from '@/api/client'
 import { formatDistance, formatRub } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { EquipmentImage } from './EquipmentImage'
+import { FavoriteButton } from './FavoriteButton'
 
 type Props = {
   item: EquipmentListItem
@@ -14,6 +15,7 @@ type Props = {
 
 export function EquipmentCard({ item, active, onHover, ref }: Props) {
   return (
+    <div className="relative">
     <Link
       ref={ref}
       to={`/equipment/${item.id}`}
@@ -46,5 +48,8 @@ export function EquipmentCard({ item, active, onHover, ref }: Props) {
         </div>
       </div>
     </Link>
+      {/* Кнопка рядом со ссылкой, а не внутри: вложенные интерактивные элементы ломают доступность */}
+      <FavoriteButton id={item.id} active={item.is_favorite} className="absolute top-4 left-4 size-8" />
+    </div>
   )
 }

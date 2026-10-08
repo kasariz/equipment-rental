@@ -2,6 +2,7 @@
 from app.models.booking import Booking, BookingStatus, RateType
 from app.models.category import Category
 from app.models.equipment import Equipment, EquipmentStatus
+from app.models.favorite import Favorite
 from app.models.photo import EquipmentPhoto
 from app.models.review import Review, ReviewDirection
 from app.models.user import User, UserRole
@@ -13,6 +14,7 @@ __all__ = [
     "Equipment",
     "EquipmentPhoto",
     "EquipmentStatus",
+    "Favorite",
     "RateType",
     "Review",
     "ReviewDirection",

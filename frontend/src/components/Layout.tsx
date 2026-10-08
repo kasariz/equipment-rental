@@ -75,9 +75,14 @@ function NavLinks({ className }: { className?: string }) {
         Каталог
       </NavLink>
       {user && (
-        <NavLink to="/bookings" className={navLinkClass}>
-          Мои брони
-        </NavLink>
+        <>
+          <NavLink to="/favorites" className={navLinkClass}>
+            Избранное
+          </NavLink>
+          <NavLink to="/bookings" className={navLinkClass}>
+            Мои брони
+          </NavLink>
+        </>
       )}
       {isOwner && (
         <>
@@ -130,6 +135,9 @@ export function Layout() {
       <footer className={cn('border-t border-line', hideFooter && 'hidden')}>
         <div className="mx-auto max-w-6xl px-4 py-6 text-sm text-steel sm:px-6">
           Ковш — аренда спецтехники у владельцев рядом с вашим объектом
+          <Link to="/privacy" className="ml-4 underline underline-offset-4 hover:text-ink">
+            Политика конфиденциальности
+          </Link>
         </div>
       </footer>
     </div>

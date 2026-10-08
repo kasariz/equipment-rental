@@ -216,6 +216,12 @@ export function CatalogPage() {
               Ещё фильтры
             </Button>
             <NearMe filters={filters} update={update} />
+            {filters.area && (
+              <Button variant="dark" size="sm" onClick={() => update({ area: '' })} aria-label="Искать по всей карте">
+                В области карты
+                <X />
+              </Button>
+            )}
           </div>
           {showMore && <MoreFilters filters={filters} update={update} />}
         </div>
@@ -284,7 +290,14 @@ export function CatalogPage() {
         )}
         aria-label="Карта"
       >
-        <EquipmentMap items={items} selectedId={hoveredId ?? selectedId} onSelect={selectFromMap} userPoint={userPoint} />
+        <EquipmentMap
+          items={items}
+          selectedId={hoveredId ?? selectedId}
+          onSelect={selectFromMap}
+          userPoint={userPoint}
+          areaActive={Boolean(filters.area)}
+          onSearchArea={(area) => update({ area: area.map((n) => n.toFixed(5)).join(',') })}
+        />
         {/* На телефоне выбранная на карте техника показывается карточкой снизу */}
         {selectedItem && (
           <div className="absolute inset-x-3 bottom-20 z-[1000] lg:hidden">

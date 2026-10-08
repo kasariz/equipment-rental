@@ -6,16 +6,20 @@ import { RequireAuth } from '@/features/auth/RequireAuth'
 import { HomePage } from '@/pages/HomePage'
 import {
   AdminPage,
+  CalendarPage,
   CatalogPage,
   EquipmentCreatePage,
   EquipmentEditPage,
   EquipmentPage,
+  FavoritesPage,
   MyBookingsPage,
   MyEquipmentPage,
   RequestsPage,
 } from '@/pages/lazy'
 import { LoginPage } from '@/pages/LoginPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
+import { ForgotPasswordPage, ResetPasswordPage } from '@/pages/PasswordPages'
+import { PrivacyPage } from '@/pages/PrivacyPage'
 import { ProfilePage } from '@/pages/ProfilePage'
 import { RegisterPage } from '@/pages/RegisterPage'
 
@@ -37,6 +41,11 @@ export const router = createBrowserRouter([
       { path: 'my/equipment', element: ownerOnly(<MyEquipmentPage />) },
       { path: 'my/equipment/new', element: ownerOnly(<EquipmentCreatePage />) },
       { path: 'my/equipment/:id/edit', element: ownerOnly(<EquipmentEditPage />) },
+      { path: 'privacy', element: <PrivacyPage /> },
+      { path: 'forgot-password', element: <ForgotPasswordPage /> },
+      { path: 'reset-password', element: <ResetPasswordPage /> },
+      { path: 'favorites', element: page(<RequireAuth><FavoritesPage /></RequireAuth>) },
+      { path: 'my/equipment/:id/calendar', element: ownerOnly(<CalendarPage />) },
       { path: 'admin', element: page(<RequireAuth roles={['admin']}><AdminPage /></RequireAuth>) },
       { path: '*', element: <NotFoundPage /> },
     ],

@@ -34,6 +34,9 @@ class BookingStatus(enum.StrEnum):
     cancelled = "cancelled"  # отменил клиент
     rejected = "rejected"  # отклонил владелец
     expired = "expired"  # владелец не подтвердил вовремя
+    # Владелец закрыл время сам: техника на стороннем заказе или на ремонте.
+    # Хранится в той же таблице, чтобы то же ограничение в базе не давало пересечься брони и закрытию
+    blocked = "blocked"
 
 
 class RateType(enum.StrEnum):
@@ -52,7 +55,7 @@ class Booking(Base):
             ("equipment_id", "="),
             ("period", "&&"),
             using="gist",
-            where=text("status IN ('pending', 'confirmed', 'active')"),
+            where=text("status IN ('pending', 'confirmed', 'active', 'blocked')"),
             name="bookings_no_overlap",
         ),
         CheckConstraint("NOT isempty(period)", name="period_not_empty"),

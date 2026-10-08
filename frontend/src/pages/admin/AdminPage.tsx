@@ -1,8 +1,8 @@
-import { ChevronLeft, ChevronRight, Pencil, Plus, Search, Trash2, UserRound, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, KeyRound, Pencil, Plus, Search, Trash2, UserRound, X } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { toast } from 'sonner'
-import type { BookingStatus, Category, EquipmentStatus, UserRole } from '@/api/client'
+import { api, getErrorMessage, type BookingStatus, type Category, type EquipmentStatus, type UserRole } from '@/api/client'
 import { PageSpinner } from '@/components/PageSpinner'
 import { Stars } from '@/components/Stars'
 import { Button } from '@/components/ui/button'
@@ -164,6 +164,19 @@ function UsersTab({ onOpenAccount }: { onOpenAccount: (account: Account, tab: Ta
   })
   const { data: me } = useMe()
   const remove = useDelete('users', 'Пользователь удалён')
+  // Если у человека нет ни почты на сервере, ни Telegram — ссылку можно продиктовать или переслать
+  const issueLink = async (userId: number) => {
+    const { data: link, error } = await api.POST('/api/admin/users/{user_id}/reset-link', {
+      params: { path: { user_id: userId } },
+    })
+    if (!link) return toast.error(getErrorMessage(error))
+    try {
+      await navigator.clipboard.writeText(link.url)
+      toast.success('Ссылка для смены пароля скопирована. Она действует 30 минут')
+    } catch {
+      window.prompt('Скопируйте ссылку для смены пароля', link.url)
+    }
+  }
 
   return (
     <>
@@ -184,11 +197,16 @@ function UsersTab({ onOpenAccount }: { onOpenAccount: (account: Account, tab: Ta
               key={u.id}
               actions={
                 u.id === me?.id ? null : (
+                  <>
+                  <Button variant="ghost" size="sm" aria-label={`Ссылка для смены пароля: ${u.full_name}`} title="Ссылка для смены пароля" onClick={() => issueLink(u.id)}>
+                    <KeyRound />
+                  </Button>
                   <DeleteButton
                     what={u.full_name}
                     description={`Вместе с аккаунтом удалятся его техника (${u.equipment_count}), брони (${u.bookings_count}) и отзывы.`}
                     onConfirm={() => remove(u.id)}
                   />
+                  </>
                 )
               }
             >

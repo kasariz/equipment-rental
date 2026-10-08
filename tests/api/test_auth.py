@@ -13,7 +13,9 @@ async def test_register_logs_in_and_me_works(make_client: ClientFactory):
 
 
 async def test_auth_cookie_is_http_only(anon: httpx.AsyncClient):
-    r = await anon.post("/api/auth/register", json={"email": "a@test.ru", "password": PASSWORD, "full_name": "Аня"})
+    r = await anon.post(
+        "/api/auth/register", json={"consent": True, "email": "a@test.ru", "password": PASSWORD, "full_name": "Аня"}
+    )
     cookie = r.headers["set-cookie"].lower()
     assert "httponly" in cookie and "samesite=lax" in cookie
 
@@ -21,7 +23,8 @@ async def test_auth_cookie_is_http_only(anon: httpx.AsyncClient):
 async def test_duplicate_email_is_rejected_case_insensitively(make_client: ClientFactory, anon: httpx.AsyncClient):
     await make_client("dup@test.ru")
     r = await anon.post(
-        "/api/auth/register", json={"email": "DUP@test.ru", "password": PASSWORD, "full_name": "Двойник"}
+        "/api/auth/register",
+        json={"consent": True, "email": "DUP@test.ru", "password": PASSWORD, "full_name": "Двойник"},
     )
     assert r.status_code == 409
 
@@ -29,7 +32,7 @@ async def test_duplicate_email_is_rejected_case_insensitively(make_client: Clien
 async def test_cannot_register_as_admin(anon: httpx.AsyncClient):
     r = await anon.post(
         "/api/auth/register",
-        json={"email": "x@test.ru", "password": PASSWORD, "full_name": "Хакер", "role": "admin"},
+        json={"consent": True, "email": "x@test.ru", "password": PASSWORD, "full_name": "Хакер", "role": "admin"},
     )
     assert r.status_code == 422
 

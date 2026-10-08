@@ -33,6 +33,14 @@ class User(Base):
     telegram_link_code: Mapped[str | None] = mapped_column(String(64), unique=True)
     telegram_link_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
+    # 152-ФЗ: когда пользователь дал согласие на обработку персональных данных
+    consent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Восстановление пароля: храним только хэш одноразового кода, сам код уходит пользователю
+    password_reset_hash: Mapped[str | None] = mapped_column(String(64), unique=True)
+    password_reset_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # После смены пароля все выданные раньше токены перестают действовать
+    password_changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
     @property
     def telegram_connected(self) -> bool:
         return self.telegram_chat_id is not None

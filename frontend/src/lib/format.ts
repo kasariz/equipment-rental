@@ -32,6 +32,7 @@ export const bookingStatusForClient = {
   cancelled: 'Вы отменили',
   rejected: 'Отклонена владельцем',
   expired: 'Не подтверждена вовремя',
+  blocked: 'Время закрыто владельцем',
 } as const
 
 export const bookingStatusForOwner = {
@@ -42,6 +43,7 @@ export const bookingStatusForOwner = {
   cancelled: 'Отменена клиентом',
   rejected: 'Отклонена',
   expired: 'Не подтверждена вовремя',
+  blocked: 'Закрыто вами',
 } as const
 
 export const bookingStatusStyle = {
@@ -52,6 +54,7 @@ export const bookingStatusStyle = {
   cancelled: 'bg-ink/10 text-steel',
   rejected: 'bg-danger/10 text-danger',
   expired: 'bg-ink/10 text-steel',
+  blocked: 'bg-ink/10 text-steel',
 } as const
 
 export function describeRate(rateType: 'hourly' | 'shift', quantity: number): string {

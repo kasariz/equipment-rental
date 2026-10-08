@@ -1,4 +1,4 @@
-import { Pencil, Plus, Trash2 } from 'lucide-react'
+import { CalendarDays, Pencil, Plus, Trash2 } from 'lucide-react'
 import { Link } from 'react-router'
 import { toast } from 'sonner'
 import { EquipmentImage } from '@/components/EquipmentImage'
@@ -61,6 +61,12 @@ export function MyEquipmentPage() {
                 </div>
               </div>
               <div className="col-span-2 flex gap-2 sm:col-span-1">
+                <Button asChild variant="outline" size="sm">
+                  <Link to={`/my/equipment/${item.id}/calendar`}>
+                    <CalendarDays />
+                    Календарь
+                  </Link>
+                </Button>
                 <Button asChild variant="outline" size="sm">
                   <Link to={`/my/equipment/${item.id}/edit`}>
                     <Pencil />

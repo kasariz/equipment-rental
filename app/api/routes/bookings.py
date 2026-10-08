@@ -28,7 +28,7 @@ from app.services.telegram.notifications import booking_event
 router = APIRouter(tags=["bookings"])
 
 # Брони, которые занимают технику. Совпадает с условием ограничения bookings_no_overlap
-BLOCKING = (BookingStatus.pending, BookingStatus.confirmed, BookingStatus.active)
+BLOCKING = (BookingStatus.pending, BookingStatus.confirmed, BookingStatus.active, BookingStatus.blocked)
 # Когда клиенту можно показать телефон владельца
 OWNER_CONTACT_VISIBLE = (BookingStatus.confirmed, BookingStatus.active, BookingStatus.completed)
 
@@ -280,7 +280,7 @@ async def create_booking(
 async def my_bookings(session: SessionDep, user: CurrentUser) -> list[BookingRead]:
     rows = await session.scalars(
         select(Booking)
-        .where(Booking.user_id == user.id)
+        .where(Booking.user_id == user.id, Booking.status != BookingStatus.blocked)
         .options(*booking_options())
         .order_by(Booking.created_at.desc())
     )
@@ -311,7 +311,12 @@ async def owner_bookings(
     user: OwnerUser,
     statuses: list[BookingStatus] | None = Query(default=None, alias="status"),
 ) -> list[BookingRead]:
-    stmt = select(Booking).join(Booking.equipment).options(*booking_options())
+    stmt = (
+        select(Booking)
+        .join(Booking.equipment)
+        .where(Booking.status != BookingStatus.blocked)  # закрытия владельца — в календаре, не в заявках
+        .options(*booking_options())
+    )
     if user.role != UserRole.admin:
         stmt = stmt.where(Equipment.owner_id == user.id)
     if statuses:

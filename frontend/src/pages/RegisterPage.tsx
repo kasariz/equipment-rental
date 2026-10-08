@@ -20,6 +20,7 @@ const schema = z.object({
   email: z.email('Введите email в формате name@example.ru'),
   phone: z.string().refine((v) => v === '' || isCompletePhone(v), 'Введите номер полностью: +7 и 10 цифр'),
   password: z.string().min(8, 'Пароль должен быть не короче 8 символов').max(128),
+  consent: z.boolean().refine((v) => v, 'Без согласия зарегистрироваться нельзя'),
 })
 type FormValues = z.infer<typeof schema>
 
@@ -52,6 +53,7 @@ export function RegisterPage() {
       email: '',
       phone: '',
       password: '',
+      consent: false,
     },
   })
   const selectedRole = useWatch({ control, name: 'role' })
@@ -61,9 +63,9 @@ export function RegisterPage() {
     return <Navigate to={isOwner ? '/my/equipment' : '/profile'} replace />
   }
 
-  const onSubmit = ({ phone, ...values }: FormValues) =>
+  const onSubmit = ({ phone, consent, ...values }: FormValues) =>
     registerUser.mutate(
-      { ...values, phone: phone || null },
+      { ...values, phone: phone || null, consent: consent as true },
       {
         onSuccess: () => {
           toast.success('Аккаунт создан')
@@ -153,6 +155,29 @@ export function RegisterPage() {
             {...register('password')}
           />
         </Field>
+
+        <div className="flex flex-col gap-1.5">
+          <label className="flex items-start gap-2.5 text-sm">
+            <input
+              type="checkbox"
+              className="mt-0.5 size-4 shrink-0 accent-ink"
+              aria-invalid={!!errors.consent}
+              aria-describedby={errors.consent ? 'consent-error' : undefined}
+              {...register('consent')}
+            />
+            <span>
+              Даю согласие на обработку персональных данных (имя, email, телефон) в соответствии с{' '}
+              <Link to="/privacy" target="_blank" className="font-medium underline underline-offset-4 hover:decoration-signal">
+                политикой конфиденциальности
+              </Link>
+            </span>
+          </label>
+          {errors.consent && (
+            <p id="consent-error" role="alert" className="text-sm text-danger">
+              {errors.consent.message}
+            </p>
+          )}
+        </div>
 
         <Button type="submit" size="lg" className="mt-2" disabled={registerUser.isPending}>
           {registerUser.isPending ? 'Создаём аккаунт…' : 'Создать аккаунт'}

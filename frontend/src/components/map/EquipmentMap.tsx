@@ -17,6 +17,9 @@ type Props = {
   selectedId: number | null
   onSelect: (id: number) => void
   userPoint?: [number, number] // [широта, долгота]
+  // Поиск в видимой области: карта не подгоняется под результаты, а после сдвига появляется кнопка
+  areaActive?: boolean
+  onSearchArea?: (area: [number, number, number, number]) => void
 }
 
 type Location = Parameters<YMap['setLocation']>[0]
@@ -29,15 +32,19 @@ function locationFor(items: EquipmentListItem[], userPoint?: [number, number]): 
   return { bounds: boundsFor(points), duration: 300 }
 }
 
-function Map({ y, items, selectedId, onSelect, userPoint }: Props & { y: YMapsComponents }) {
-  const { YMap, YMapDefaultSchemeLayer, YMapDefaultFeaturesLayer, YMapMarker } = y
+function Map({ y, items, selectedId, onSelect, userPoint, areaActive, onSearchArea }: Props & { y: YMapsComponents }) {
+  const { YMap, YMapDefaultSchemeLayer, YMapDefaultFeaturesLayer, YMapMarker, YMapListener } = y
+  const [moved, setMoved] = useState(false)
   const mapRef = useRef<YMap>(null)
 
   // Подгоняем карту под результаты, только когда меняется сам набор техники.
   // Если человек сам подвинул карту, перерисовки её не дёргают
   const fitKey = items.map((i) => i.id).join(',') + (userPoint?.join(',') ?? '')
   const [fit, setFit] = useState(() => ({ key: fitKey, location: locationFor(items, userPoint) }))
-  if (fit.key !== fitKey) setFit({ key: fitKey, location: locationFor(items, userPoint) })
+  if (fit.key !== fitKey) {
+    // В режиме «искать здесь» карта остаётся там, где её поставил человек
+    setFit({ key: fitKey, location: areaActive ? fit.location : locationFor(items, userPoint) })
+  }
 
   // Выбранная в списке техника за краем карты — плавно показываем её
   const selected = items.find((i) => i.id === selectedId)
@@ -55,6 +62,8 @@ function Map({ y, items, selectedId, onSelect, userPoint }: Props & { y: YMapsCo
         <YMap ref={mapRef} location={fit.location}>
           <YMapDefaultSchemeLayer />
           <YMapDefaultFeaturesLayer />
+          {/* onActionEnd срабатывает только на действия человека: перетаскивание и масштаб */}
+          {onSearchArea && <YMapListener onActionEnd={() => setMoved(true)} />}
           {userPoint && (
             <YMapMarker coordinates={toLngLat(userPoint[0], userPoint[1])}>
               <div className="user-dot" aria-label="Вы здесь" />
@@ -78,6 +87,21 @@ function Map({ y, items, selectedId, onSelect, userPoint }: Props & { y: YMapsCo
         </YMap>
       </div>
       <ZoomButtons mapRef={mapRef} />
+      {onSearchArea && moved && (
+        <button
+          type="button"
+          onClick={() => {
+            const map = mapRef.current
+            if (!map) return
+            const [[left, top], [right, bottom]] = map.bounds
+            onSearchArea([bottom, top, left, right])
+            setMoved(false)
+          }}
+          className="absolute top-3 left-1/2 z-10 -translate-x-1/2 rounded-full bg-ink px-4 py-2 text-sm font-medium text-paper shadow-lg hover:bg-ink/85"
+        >
+          Искать в этой области
+        </button>
+      )}
     </div>
   )
 }

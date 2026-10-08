@@ -122,6 +122,7 @@ class EquipmentListItem(BaseModel):
     distance_km: float | None = None
     owner_rating: float | None = None
     owner_reviews_count: int = 0
+    is_favorite: bool = False
 
 
 class EquipmentRead(EquipmentListItem):

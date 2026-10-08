@@ -11,6 +11,7 @@ export type CatalogFilters = {
   lat: string
   lon: string
   radius: string
+  area: string // «minLat,maxLat,minLon,maxLon» — поиск в видимой области карты
   sort: NonNullable<EquipmentQuery['sort']>
 }
 
@@ -34,6 +35,7 @@ export function useCatalogFilters() {
       lat: params.get('lat') ?? '',
       lon: params.get('lon') ?? '',
       radius: params.get('radius') ?? '',
+      area: params.get('area') ?? '',
       sort: SORTS.includes(sort as never) ? (sort as CatalogFilters['sort']) : 'new',
     }
   }, [params])
@@ -45,7 +47,7 @@ export function useCatalogFilters() {
           const next = new URLSearchParams(prev)
           const map: Record<keyof CatalogFilters, string> = {
             category: 'category', q: 'q', priceMax: 'price_max',
-            from: 'from', to: 'to', lat: 'lat', lon: 'lon', radius: 'radius', sort: 'sort',
+            from: 'from', to: 'to', lat: 'lat', lon: 'lon', radius: 'radius', area: 'area', sort: 'sort',
           }
           for (const [key, value] of Object.entries(patch) as [keyof CatalogFilters, unknown][]) {
             const str = String(value ?? '')
@@ -77,6 +79,10 @@ export function useCatalogFilters() {
     } else if (q.sort === 'distance') {
       q.sort = 'new'
     }
+    const area = filters.area.split(',').map(Number)
+    if (area.length === 4 && area.every(Number.isFinite)) {
+      ;[q.min_lat, q.max_lat, q.min_lon, q.max_lon] = area
+    }
     if (filters.from && filters.to) {
       const from = new Date(filters.from)
       const to = new Date(filters.to)
@@ -89,7 +95,7 @@ export function useCatalogFilters() {
   }, [filters])
 
   const activeCount =
-    [filters.category, filters.q, filters.priceMax, filters.from && filters.to, filters.lat].filter(Boolean)
+    [filters.category, filters.q, filters.priceMax, filters.from && filters.to, filters.lat, filters.area].filter(Boolean)
       .length
 
   return { filters, update, reset, query, activeCount }
