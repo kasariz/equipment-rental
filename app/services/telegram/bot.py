@@ -13,6 +13,7 @@ from sqlalchemy import select, update
 
 from app.db.session import SessionLocal
 from app.models import User
+from app.services import alerts
 from app.services.telegram import client
 from app.services.telegram.client import TelegramError
 
@@ -90,11 +91,40 @@ async def handle_update(upd: dict) -> None:
         await reply(chat_id, HELP)
 
 
+class ConnectionWatch:
+    """Следит за связью с Telegram. Короткие обрывы (мигнул интернет, перебои с доступом к Telegram)
+    переживаем молча, с нарастающей паузой. Тревога — только если связи нет долго, а потом —
+    сообщение, что она вернулась. Иначе администратор быстро привыкнет игнорировать алерты."""
+
+    def __init__(self, alert_after: int = 10) -> None:
+        self.alert_after = alert_after  # 10 попыток с паузами 5…60 с — это примерно 6 минут
+        self.failures = 0
+        self.alerted = False
+
+    def failed(self, error: Exception) -> float:
+        """Засчитывает неудачу и возвращает паузу перед следующей попыткой, в секундах"""
+        self.failures += 1
+        if self.failures == self.alert_after:
+            self.alerted = True
+            # Уровень ERROR уходит администратору через бота мониторинга
+            log.error("Нет связи с Telegram уже около 6 минут (%s). Уведомления пользователям не доходят", error)
+        else:
+            log.warning("Нет связи с Telegram, попытка %s: %r", self.failures, error)
+        return float(min(60, 5 * 2 ** min(self.failures - 1, 4)))
+
+    async def succeeded(self) -> None:
+        if self.alerted:
+            await alerts.send_alert("🟢 Связь с Telegram восстановлена", key="telegram-recovered")
+        self.failures = 0
+        self.alerted = False
+
+
 async def polling_loop() -> None:
     if not client.enabled():
         log.info("TELEGRAM_BOT_TOKEN не задан: Telegram-уведомления выключены")
         return
     offset: int | None = None
+    watch = ConnectionWatch()
     while True:
         try:
             await bot_username()
@@ -103,6 +133,7 @@ async def polling_loop() -> None:
                 {"offset": offset, "timeout": 25, "allowed_updates": ["message"]},
                 http_timeout=35,
             )
+            await watch.succeeded()
             for upd in updates:
                 offset = upd["update_id"] + 1
                 try:
@@ -112,7 +143,9 @@ async def polling_loop() -> None:
         except asyncio.CancelledError:
             raise
         except httpx.TimeoutException:
-            continue
+            continue  # длинный опрос просто истёк без новых сообщений — это нормально
+        except httpx.TransportError as e:
+            await asyncio.sleep(watch.failed(e))
         except TelegramError as e:
             if e.status == 409:
                 log.warning("Этого бота уже опрашивает другой процесс: %s", e.description)

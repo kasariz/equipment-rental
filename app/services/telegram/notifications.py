@@ -4,11 +4,13 @@
 или недоступен, бронирование от этого не страдает.
 """
 
+import asyncio
 import logging
 from datetime import datetime
 from html import escape
 from zoneinfo import ZoneInfo
 
+import httpx
 from sqlalchemy import select, update
 from sqlalchemy.orm import selectinload
 
@@ -77,6 +79,18 @@ def site_button(text: str, path: str) -> dict | None:
     return {"inline_keyboard": [[{"text": text, "url": settings.site_url.rstrip("/") + path}]]}
 
 
+async def call_with_retry(params: dict, attempts: int = 3, pause: float = 2.0) -> None:
+    """Короткий обрыв связи не должен стоить пользователю уведомления: пробуем ещё раз"""
+    for attempt in range(1, attempts + 1):
+        try:
+            await client.call("sendMessage", params)
+            return
+        except httpx.TransportError:
+            if attempt == attempts:
+                raise
+            await asyncio.sleep(pause * attempt)
+
+
 async def send(user: User, text: str, markup: dict | None = None) -> None:
     if not client.enabled() or user.telegram_chat_id is None:
         return
@@ -84,7 +98,10 @@ async def send(user: User, text: str, markup: dict | None = None) -> None:
     if markup:
         params["reply_markup"] = markup
     try:
-        await client.call("sendMessage", params)
+        await call_with_retry(params)
+    except httpx.TransportError:
+        # Три попытки не помогли: пользователь не узнал о заявке — это повод сообщить администратору
+        log.error("Нет связи с Telegram: уведомление пользователю %s не доставлено", user.id)
     except TelegramError as e:
         if e.status == 403:  # пользователь заблокировал бота — больше не пытаемся
             async with SessionLocal() as session:
