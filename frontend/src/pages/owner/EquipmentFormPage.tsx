@@ -488,7 +488,7 @@ function EquipmentForm({ item }: { item?: Equipment }) {
         )}
       </Section>
 
-      <div className="sticky bottom-0 z-[1001] -mx-4 flex flex-wrap items-center gap-3 border-t border-line bg-concrete/95 px-4 py-4 backdrop-blur sm:-mx-6 sm:px-6">
+      <div className="sticky bottom-0 z-[1001] -mx-5 flex flex-wrap items-center gap-3 border-t border-line bg-concrete/95 px-5 py-4 backdrop-blur sm:-mx-6 sm:px-6">
         <Button type="submit" size="lg" disabled={saving || (isEdit && !isDirty && !photosChanged)}>
           {saving ? 'Сохраняем…' : isEdit ? 'Сохранить изменения' : 'Добавить технику'}
         </Button>
@@ -507,7 +507,7 @@ function EquipmentForm({ item }: { item?: Equipment }) {
 
 export function EquipmentCreatePage() {
   return (
-    <div className="mx-auto max-w-5xl px-4 pt-10 sm:px-6 sm:pt-14">
+    <div className="mx-auto max-w-5xl px-5 pt-10 sm:px-6 sm:pt-14">
       <h1 className="font-display mb-8 text-3xl font-semibold tracking-tight">Новая техника</h1>
       <EquipmentForm />
     </div>
@@ -520,7 +520,7 @@ export function EquipmentEditPage() {
   if (isPending) return <PageSpinner />
   if (!item) return <NotFoundPage />
   return (
-    <div className="mx-auto max-w-5xl px-4 pt-10 sm:px-6 sm:pt-14">
+    <div className="mx-auto max-w-5xl px-5 pt-10 sm:px-6 sm:pt-14">
       <h1 className="font-display mb-8 text-3xl font-semibold tracking-tight">{item.name}</h1>
       <EquipmentForm key={item.id} item={item} />
     </div>

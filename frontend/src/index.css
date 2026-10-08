@@ -24,6 +24,13 @@
     font-family: var(--font-sans);
   }
 
+  /* Страховка: если какой-то элемент окажется шире экрана, iPhone не станет уменьшать
+     всю страницу (из-за этого справа появлялась полоса, а текст мельчал).
+     clip, а не hidden: не ломает position: sticky у шапки и панели сохранения */
+  body {
+    overflow-x: clip;
+  }
+
   :focus-visible {
     @apply outline-2 outline-offset-2 outline-ink;
   }

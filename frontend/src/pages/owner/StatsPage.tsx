@@ -46,7 +46,7 @@ export function StatsPage() {
   const shift = (n: number) => setMonth(new Date(month.getFullYear(), month.getMonth() + n, 1))
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-14">
+    <div className="mx-auto max-w-5xl px-5 py-10 sm:px-6 sm:py-14">
       <Link to="/my/equipment" className="text-sm text-steel hover:text-ink">
         ← Моя техника
       </Link>

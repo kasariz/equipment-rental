@@ -112,7 +112,7 @@ export function ProfilePage() {
   ]
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
+    <div className="mx-auto max-w-3xl px-5 py-10 sm:px-6 sm:py-14">
       <h1 className="font-display text-3xl font-semibold tracking-tight">{user.full_name}</h1>
 
       <dl className="mt-8 divide-y divide-line rounded-xl border border-line bg-paper">

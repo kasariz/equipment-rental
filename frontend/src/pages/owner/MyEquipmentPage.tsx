@@ -20,7 +20,7 @@ export function MyEquipmentPage() {
   const remove = useDeleteEquipment()
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-14">
+    <div className="mx-auto max-w-5xl px-5 py-10 sm:px-6 sm:py-14">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-display text-3xl font-semibold tracking-tight">Моя техника</h1>
         <div className="flex flex-wrap gap-2">

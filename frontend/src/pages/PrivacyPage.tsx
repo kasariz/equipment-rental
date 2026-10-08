@@ -53,7 +53,7 @@ export function PrivacyPage() {
   ]
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
+    <div className="mx-auto max-w-3xl px-5 py-10 sm:px-6 sm:py-14">
       <h1 className="font-display text-3xl font-semibold tracking-tight">Политика обработки персональных данных</h1>
       <p className="mt-3 text-steel">
         Документ описывает, как сервис «Ковш» обрабатывает персональные данные пользователей в соответствии

@@ -206,7 +206,7 @@ export function CatalogPage() {
     <div className="lg:grid lg:h-[calc(100svh-70px)] lg:grid-cols-[minmax(400px,480px)_minmax(0,1fr)]">
       {/* Левая колонка: фильтры и список */}
       <section className={cn('flex flex-col lg:overflow-y-auto', mobileView === 'map' && 'max-lg:hidden')} aria-label="Результаты поиска">
-        <div className="flex flex-col gap-3 border-b border-line bg-concrete px-4 pt-5 pb-4">
+        <div className="flex flex-col gap-3 border-b border-line bg-concrete px-5 pt-5 pb-4">
           <h1 className="font-display text-2xl font-semibold tracking-tight">Каталог техники</h1>
           <SearchBox value={filters.q} onChange={(q) => update({ q })} />
           <CategoryChips value={filters.category} onChange={(category) => update({ category })} />
@@ -226,7 +226,7 @@ export function CatalogPage() {
           {showMore && <MoreFilters filters={filters} update={update} />}
         </div>
 
-        <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-2">
+        <div className="flex items-center justify-between gap-3 px-5 pt-4 pb-2">
           <p className="text-sm text-steel" aria-live="polite">
             {isPending ? 'Ищем технику…' : `Найдено ${total} ${pluralize(total, ['единица', 'единицы', 'единиц'])}`}
           </p>

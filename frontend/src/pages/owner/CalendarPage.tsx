@@ -77,7 +77,7 @@ export function CalendarPage() {
   const blocks = (events ?? []).filter((e) => e.kind === 'block')
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
+    <div className="mx-auto max-w-3xl px-5 py-10 sm:px-6 sm:py-14">
       <Link to="/my/equipment" className="text-sm text-steel hover:text-ink">
         ← Моя техника
       </Link>

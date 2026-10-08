@@ -100,7 +100,7 @@ export function MyBookingsPage() {
   const history = data?.filter((b) => !(CURRENT as readonly string[]).includes(b.status)) ?? []
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
+    <div className="mx-auto max-w-3xl px-5 py-10 sm:px-6 sm:py-14">
       <h1 className="font-display text-3xl font-semibold tracking-tight">Мои брони</h1>
       {isPending && <PageSpinner />}
       {isError && <p className="mt-8 text-danger">Не удалось загрузить брони. Обновите страницу.</p>}

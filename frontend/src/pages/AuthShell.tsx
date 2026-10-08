@@ -9,7 +9,7 @@ const steps = [
 /** Общая раскладка страниц входа и регистрации: слева о сервисе, справа форма. */
 export function AuthShell({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="mx-auto grid max-w-6xl gap-0 px-4 py-8 sm:px-6 lg:grid-cols-[5fr_6fr] lg:py-14">
+    <div className="mx-auto grid max-w-6xl gap-0 px-5 py-8 sm:px-6 lg:grid-cols-[5fr_6fr] lg:py-14">
       <aside className="relative hidden overflow-hidden rounded-l-xl bg-ink p-10 text-paper lg:block">
         <p className="font-display text-2xl leading-snug font-semibold">
           Техника на объект без обзвона объявлений

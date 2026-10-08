@@ -531,13 +531,13 @@ export function AdminPage() {
   const clearAccount = () => setAccount(null)
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-14">
+    <div className="mx-auto max-w-5xl px-5 py-10 sm:px-6 sm:py-14">
       <h1 className="font-display text-3xl font-semibold tracking-tight">Администрирование</h1>
       <p className="mt-2 max-w-prose text-steel">
         Найдите аккаунт во вкладке «Пользователи» и откройте его брони, технику или отзывы. Удаление здесь окончательное:
         записи не попадают в архив.
       </p>
-      <div className="-mx-4 mt-8 flex gap-1 overflow-x-auto border-b border-line px-4 [scrollbar-width:none]" role="tablist">
+      <div className="-mx-5 mt-8 flex gap-1 overflow-x-auto border-b border-line px-5 [scrollbar-width:none]" role="tablist">
         {TABS.map((t) => (
           <button
             key={t.key}

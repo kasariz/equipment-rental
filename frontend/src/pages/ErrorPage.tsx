@@ -9,7 +9,7 @@ export function ErrorPage() {
   const updated = isChunkLoadError(error)
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-24 sm:px-6">
+    <div className="mx-auto max-w-2xl px-5 py-24 sm:px-6">
       <h1 className="font-display text-3xl font-semibold">{updated ? 'Сайт обновился' : 'Что-то пошло не так'}</h1>
       <p className="mt-3 text-steel">
         {updated

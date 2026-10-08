@@ -35,11 +35,13 @@ function UserArea() {
   }
 
   return (
-    <div className="flex items-center gap-1">
-      <Button asChild variant="ghost" size="sm">
-        <Link to="/profile">
+    <div className="flex min-w-0 items-center gap-1">
+      <Button asChild variant="ghost" size="sm" className="min-w-0">
+        <Link to="/profile" aria-label={`Профиль: ${user.full_name}`}>
           <UserRound />
-          <span className="max-w-40 truncate">{user.full_name}</span>
+          {/* На телефоне только имя: полное «Имя Отчество Фамилия» не помещается в шапку */}
+          <span className="max-w-32 truncate sm:hidden">{user.full_name.split(' ')[0]}</span>
+          <span className="hidden max-w-40 truncate sm:inline">{user.full_name}</span>
         </Link>
       </Button>
       <Button
@@ -119,15 +121,15 @@ export function Layout() {
     <div className="flex min-h-svh flex-col">
       <div className="hazard-stripe h-1.5" aria-hidden />
       <header className="border-b border-line bg-paper">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-6 px-4 sm:px-6">
-          <div className="flex items-center gap-8">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-5 sm:gap-6 sm:px-6">
+          <div className="flex shrink-0 items-center gap-8">
             <Logo />
             <NavLinks className="hidden items-center gap-6 md:flex" />
           </div>
           <UserArea />
         </div>
         {/* На телефоне навигация — отдельной прокручиваемой строкой под шапкой */}
-        <NavLinks className="flex gap-5 overflow-x-auto border-t border-line px-4 py-2 [scrollbar-width:none] md:hidden" />
+        <NavLinks className="flex gap-5 overflow-x-auto border-t border-line px-5 py-2 [scrollbar-width:none] md:hidden" />
       </header>
 
       <main className="flex-1">
@@ -135,7 +137,7 @@ export function Layout() {
       </main>
 
       <footer className={cn('border-t border-line', hideFooter && 'hidden')}>
-        <div className="mx-auto max-w-6xl px-4 py-6 text-sm text-steel sm:px-6">
+        <div className="mx-auto max-w-6xl px-5 py-6 text-sm text-steel sm:px-6">
           Ковш — аренда спецтехники у владельцев рядом с вашим объектом
           {site?.privacy_consent_required && (
             <Link to="/privacy" className="ml-4 underline underline-offset-4 hover:text-ink">

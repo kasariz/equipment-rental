@@ -125,14 +125,14 @@ export function EquipmentPage() {
 
   if (isPending) return <PageSpinner />
   if (isError) {
-    return <p className="mx-auto max-w-6xl px-4 py-14 text-danger sm:px-6">Не удалось загрузить технику. Обновите страницу.</p>
+    return <p className="mx-auto max-w-6xl px-5 py-14 text-danger sm:px-6">Не удалось загрузить технику. Обновите страницу.</p>
   }
   if (!item) return <NotFoundPage />
 
   const isOwner = user != null && (user.id === item.owner.id || user.role === 'admin')
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-10">
+    <div className="mx-auto max-w-6xl px-5 py-6 sm:px-6 sm:py-10">
       <Link
         to={`/catalog?category=${item.category.slug}`}
         className="inline-flex items-center gap-1.5 rounded-sm text-sm text-steel hover:text-ink"

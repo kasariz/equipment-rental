@@ -154,7 +154,7 @@ export function RequestsPage() {
   if (tab === 'archive') items.reverse() // в архиве сначала свежие
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-14">
+    <div className="mx-auto max-w-4xl px-5 py-10 sm:px-6 sm:py-14">
       <h1 className="font-display text-3xl font-semibold tracking-tight">Заявки</h1>
       <p className="mt-2 max-w-prose text-steel">
         Позвоните клиенту, договоритесь о деталях и подтвердите бронь. Неподтверждённая заявка отменится через сутки.
@@ -169,7 +169,7 @@ export function RequestsPage() {
         </p>
       )}
 
-      <div className="-mx-4 mt-8 flex gap-1 overflow-x-auto border-b border-line px-4" role="tablist">
+      <div className="-mx-5 mt-8 flex gap-1 overflow-x-auto border-b border-line px-5" role="tablist">
         {TABS.map((t) => {
           const n = count(t.statuses)
           return (

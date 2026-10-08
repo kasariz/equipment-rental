@@ -7,7 +7,7 @@ import { useFavorites } from '@/features/favorites/api'
 export function FavoritesPage() {
   const { data, isPending } = useFavorites()
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
+    <div className="mx-auto max-w-3xl px-5 py-10 sm:px-6 sm:py-14">
       <h1 className="font-display text-3xl font-semibold tracking-tight">Избранное</h1>
       {isPending && <PageSpinner />}
       {data && data.length === 0 && (

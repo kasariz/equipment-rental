@@ -13,7 +13,7 @@ export function HomePage() {
   const rentOutLink = isOwner ? '/my/equipment' : user ? null : '/register?role=owner'
   return (
     <>
-      <section className="mx-auto max-w-6xl px-4 pt-14 pb-16 sm:px-6 sm:pt-24 sm:pb-24">
+      <section className="mx-auto max-w-6xl px-5 pt-14 pb-16 sm:px-6 sm:pt-24 sm:pb-24">
         <h1 className="font-display max-w-4xl text-4xl leading-[1.08] font-bold tracking-tight text-balance sm:text-6xl">
           Спецтехника на ваш объект на час, смену или неделю
         </h1>
@@ -34,7 +34,7 @@ export function HomePage() {
       </section>
 
       <section className="border-t border-line bg-paper">
-        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+        <div className="mx-auto max-w-6xl px-5 py-12 sm:px-6">
           <h2 className="font-display text-xl font-semibold">Что можно арендовать</h2>
           <ul className="mt-6 flex flex-wrap gap-2.5">
             {categories?.map(({ slug, name }) => (
