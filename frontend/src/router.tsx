@@ -18,6 +18,7 @@ import {
   StatsPage,
 } from '@/pages/lazy'
 import { LoginPage } from '@/pages/LoginPage'
+import { ErrorPage } from '@/pages/ErrorPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { ForgotPasswordPage, ResetPasswordPage } from '@/pages/PasswordPages'
 import { PrivacyPage } from '@/pages/PrivacyPage'
@@ -30,6 +31,7 @@ const ownerOnly = (node: ReactNode) => page(<RequireAuth roles={['owner', 'admin
 export const router = createBrowserRouter([
   {
     element: <Layout />,
+    errorElement: <ErrorPage />,
     children: [
       { index: true, element: <HomePage /> },
       { path: 'catalog', element: page(<CatalogPage />) },

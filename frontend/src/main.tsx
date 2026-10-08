@@ -5,6 +5,7 @@ import { RouterProvider } from 'react-router'
 import { Toaster } from 'sonner'
 import { router } from './router'
 import './index.css'
+import { reloadForNewVersion } from './lib/newVersion'
 import { setupPwa } from './lib/pwa'
 
 const queryClient = new QueryClient({
@@ -21,3 +22,8 @@ createRoot(document.getElementById('root')!).render(
 )
 
 setupPwa()
+
+// Старая вкладка после выкладки новой версии: один раз перезагружаемся вместо ошибки
+window.addEventListener('vite:preloadError', (event) => {
+  if (reloadForNewVersion()) event.preventDefault()
+})

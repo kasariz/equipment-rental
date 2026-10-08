@@ -31,6 +31,13 @@
 	@assets path /assets/*
 	header @assets Cache-Control "public, max-age=31536000, immutable"
 
+	# Файлы сборки отдаём как есть. Если файла нет (вкладка от старой версии), — 404,
+	# а не index.html: иначе браузер получит HTML вместо JavaScript и упадёт с невнятной ошибкой
+	handle /assets/* {
+		root * /srv/app
+		file_server
+	}
+
 	# Всё остальное — одностраничное приложение: неизвестные пути ведут на index.html
 	handle {
 		root * /srv/app
