@@ -408,10 +408,413 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/geo/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Geo Status */
+        get: operations["geo-geo_status"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/geo/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Geo Search */
+        get: operations["geo-geo_search"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/geo/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Geo Reverse */
+        get: operations["geo-geo_reverse"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bookings/{booking_id}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Review Owner
+         * @description Арендатор оценивает владельца
+         */
+        post: operations["reviews-review_owner"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bookings/{booking_id}/renter-review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Review Renter
+         * @description Владелец оценивает арендатора
+         */
+        post: operations["reviews-review_renter"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/owners/{owner_id}/reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Owner Reviews
+         * @description Публично: отзывы о владельце видят все, кто выбирает технику
+         */
+        get: operations["reviews-owner_reviews"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/renters/{renter_id}/reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Renter Reviews
+         * @description Только владельцам: отзывы об арендаторе помогают решить, подтверждать ли заявку
+         */
+        get: operations["reviews-renter_reviews"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/my/ratings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My Ratings */
+        get: operations["reviews-my_ratings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Users */
+        get: operations["admin-list_users"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/users/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete User */
+        delete: operations["admin-delete_user"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/equipment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Equipment */
+        get: operations["admin-list_equipment"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/equipment/{equipment_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete Equipment
+         * @description В отличие от владельца, администратор удаляет технику и с активными бронями
+         */
+        delete: operations["admin-delete_equipment"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/bookings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Bookings */
+        get: operations["admin-list_bookings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/bookings/{booking_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Booking */
+        delete: operations["admin-delete_booking"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Reviews */
+        get: operations["admin-list_reviews"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/reviews/{review_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Review */
+        delete: operations["admin-delete_review"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Category */
+        post: operations["admin-create_category"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/categories/{category_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update Category */
+        put: operations["admin-update_category"];
+        post?: never;
+        /** Delete Category */
+        delete: operations["admin-delete_category"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AdminEquipmentRead */
+        AdminEquipmentRead: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /** Category */
+            category: string;
+            /** Status */
+            status: string;
+            /** Owner Id */
+            owner_id: number;
+            /** Owner Name */
+            owner_name: string;
+            /** Owner Email */
+            owner_email: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** AdminReviewRead */
+        AdminReviewRead: {
+            /** Id */
+            id: number;
+            /**
+             * Direction
+             * @description about_owner — отзыв о владельце, about_renter — об арендаторе
+             */
+            direction: string;
+            /** Rating */
+            rating: number;
+            /** Text */
+            text: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Author Name
+             * @description Имя и первая буква фамилии: «Анна К.»
+             */
+            author_name: string;
+            /** Equipment Name */
+            equipment_name: string;
+            /** Subject Id */
+            subject_id: number;
+            /** Subject Name */
+            subject_name: string;
+            /** Author Id */
+            author_id: number;
+        };
+        /** AdminUserRead */
+        AdminUserRead: {
+            /** Id */
+            id: number;
+            /** Email */
+            email: string;
+            /** Full Name */
+            full_name: string;
+            /** Phone */
+            phone: string | null;
+            role: components["schemas"]["UserRole"];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Equipment Count
+             * @default 0
+             */
+            equipment_count: number;
+            /**
+             * Bookings Count
+             * @default 0
+             */
+            bookings_count: number;
+        };
         /** Body_catalog-upload_photos */
         "Body_catalog-upload_photos": {
             /** Files */
@@ -434,17 +837,17 @@ export interface components {
              */
             quantity: number;
             /**
-             * With Operator
-             * @default false
-             */
-            with_operator: boolean;
-            /**
              * Contact Phone
              * @description По нему позвонит владелец
              */
             contact_phone: string;
             /** Delivery Address */
             delivery_address?: string | null;
+            /**
+             * Delivery Address Token
+             * @description Подпись адреса из /api/geo/search
+             */
+            delivery_address_token?: string | null;
             /** Comment */
             comment?: string | null;
         };
@@ -477,11 +880,6 @@ export interface components {
              * @description Часы или смены
              */
             quantity: number;
-            /**
-             * With Operator
-             * @default false
-             */
-            with_operator: boolean;
         };
         /** BookingRead */
         BookingRead: {
@@ -501,8 +899,6 @@ export interface components {
              * Format: date-time
              */
             end: string;
-            /** With Operator */
-            with_operator: boolean;
             /** Delivery Address */
             delivery_address: string | null;
             /** Comment */
@@ -511,10 +907,6 @@ export interface components {
             contact_phone: string;
             /** Reject Reason */
             reject_reason: string | null;
-            /** Rental Price */
-            rental_price: number;
-            /** Operator Price */
-            operator_price: number;
             /** Total Price */
             total_price: number;
             /**
@@ -522,6 +914,18 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+            /**
+             * Reviewed
+             * @description Клиент уже оставил отзыв о владельце
+             * @default false
+             */
+            reviewed: boolean;
+            /**
+             * Renter Reviewed
+             * @description Владелец уже оставил отзыв об арендаторе
+             * @default false
+             */
+            renter_reviewed: boolean;
             equipment: components["schemas"]["BookingEquipment"];
             /** @description Для владельца: кто арендует */
             client?: components["schemas"]["Contact"] | null;
@@ -554,13 +958,37 @@ export interface components {
             name: string;
             /** Slug */
             slug: string;
+            /**
+             * Spec Template
+             * @description Характеристики для формы добавления техники
+             */
+            spec_template: components["schemas"]["SpecTemplateItem"][];
+        };
+        /** CategoryWrite */
+        CategoryWrite: {
+            /** Name */
+            name: string;
+            /**
+             * Spec Template
+             * @default []
+             */
+            spec_template: components["schemas"]["SpecTemplateItem"][];
         };
         /** Contact */
         Contact: {
+            /** Id */
+            id?: number | null;
             /** Full Name */
             full_name: string;
             /** Phone */
             phone: string | null;
+            /** Rating */
+            rating?: number | null;
+            /**
+             * Reviews Count
+             * @default 0
+             */
+            reviews_count: number;
         };
         /** EquipmentCreate */
         EquipmentCreate: {
@@ -576,7 +1004,12 @@ export interface components {
              */
             specs: components["schemas"]["SpecItem"][];
             /** Address */
-            address?: string | null;
+            address: string;
+            /**
+             * Address Token
+             * @description Подпись адреса из /api/geo/search
+             */
+            address_token?: string | null;
             /** Latitude */
             latitude: number;
             /** Longitude */
@@ -590,13 +1023,6 @@ export interface components {
              * @default 4
              */
             min_hours: number;
-            /**
-             * Operator Available
-             * @default false
-             */
-            operator_available: boolean;
-            /** Operator Price Per Hour */
-            operator_price_per_hour?: number | string | null;
         };
         /** EquipmentListItem */
         EquipmentListItem: {
@@ -617,15 +1043,18 @@ export interface components {
             price_per_shift: number | null;
             /** Min Hours */
             min_hours: number;
-            /** Operator Available */
-            operator_available: boolean;
-            /** Operator Price Per Hour */
-            operator_price_per_hour: number | null;
             status: components["schemas"]["EquipmentStatus"];
             /** Cover Url */
             cover_url?: string | null;
             /** Distance Km */
             distance_km?: number | null;
+            /** Owner Rating */
+            owner_rating?: number | null;
+            /**
+             * Owner Reviews Count
+             * @default 0
+             */
+            owner_reviews_count: number;
         };
         /** EquipmentPage */
         EquipmentPage: {
@@ -653,15 +1082,18 @@ export interface components {
             price_per_shift: number | null;
             /** Min Hours */
             min_hours: number;
-            /** Operator Available */
-            operator_available: boolean;
-            /** Operator Price Per Hour */
-            operator_price_per_hour: number | null;
             status: components["schemas"]["EquipmentStatus"];
             /** Cover Url */
             cover_url?: string | null;
             /** Distance Km */
             distance_km?: number | null;
+            /** Owner Rating */
+            owner_rating?: number | null;
+            /**
+             * Owner Reviews Count
+             * @default 0
+             */
+            owner_reviews_count: number;
             /** Description */
             description: string | null;
             /** Specs */
@@ -695,6 +1127,8 @@ export interface components {
             specs?: components["schemas"]["SpecItem"][] | null;
             /** Address */
             address?: string | null;
+            /** Address Token */
+            address_token?: string | null;
             /** Latitude */
             latitude?: number | null;
             /** Longitude */
@@ -705,16 +1139,33 @@ export interface components {
             price_per_shift?: number | string | null;
             /** Min Hours */
             min_hours?: number | null;
-            /** Operator Available */
-            operator_available?: boolean | null;
-            /** Operator Price Per Hour */
-            operator_price_per_hour?: number | string | null;
             status?: components["schemas"]["EquipmentStatus"] | null;
+        };
+        /** GeoStatus */
+        GeoStatus: {
+            /** Enabled */
+            enabled: boolean;
+        };
+        /** GeoSuggestion */
+        GeoSuggestion: {
+            /** Address */
+            address: string;
+            /** Lat */
+            lat: number;
+            /** Lon */
+            lon: number;
+            /** Token */
+            token: string;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** MyRatings */
+        MyRatings: {
+            as_owner: components["schemas"]["UserReviewsSummary"];
+            as_renter: components["schemas"]["UserReviewsSummary"];
         };
         /** OwnerPublic */
         OwnerPublic: {
@@ -722,6 +1173,41 @@ export interface components {
             id: number;
             /** Full Name */
             full_name: string;
+            /** Rating */
+            rating?: number | null;
+            /**
+             * Reviews Count
+             * @default 0
+             */
+            reviews_count: number;
+        };
+        /** Page[AdminEquipmentRead] */
+        Page_AdminEquipmentRead_: {
+            /** Items */
+            items: components["schemas"]["AdminEquipmentRead"][];
+            /** Total */
+            total: number;
+        };
+        /** Page[AdminReviewRead] */
+        Page_AdminReviewRead_: {
+            /** Items */
+            items: components["schemas"]["AdminReviewRead"][];
+            /** Total */
+            total: number;
+        };
+        /** Page[AdminUserRead] */
+        Page_AdminUserRead_: {
+            /** Items */
+            items: components["schemas"]["AdminUserRead"][];
+            /** Total */
+            total: number;
+        };
+        /** Page[BookingRead] */
+        Page_BookingRead_: {
+            /** Items */
+            items: components["schemas"]["BookingRead"][];
+            /** Total */
+            total: number;
         };
         /** PhotoRead */
         PhotoRead: {
@@ -744,10 +1230,6 @@ export interface components {
             end: string;
             /** Billable Hours */
             billable_hours: number;
-            /** Rental Price */
-            rental_price: number;
-            /** Operator Price */
-            operator_price: number;
             /** Total Price */
             total_price: number;
             /** Available */
@@ -763,6 +1245,44 @@ export interface components {
             /** Reason */
             reason?: string | null;
         };
+        /** ReviewCreate */
+        ReviewCreate: {
+            /** Rating */
+            rating: number;
+            /** Text */
+            text?: string | null;
+        };
+        /**
+         * ReviewDirection
+         * @enum {string}
+         */
+        ReviewDirection: "about_owner" | "about_renter";
+        /** ReviewRead */
+        ReviewRead: {
+            /** Id */
+            id: number;
+            /**
+             * Direction
+             * @description about_owner — отзыв о владельце, about_renter — об арендаторе
+             */
+            direction: string;
+            /** Rating */
+            rating: number;
+            /** Text */
+            text: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Author Name
+             * @description Имя и первая буква фамилии: «Анна К.»
+             */
+            author_name: string;
+            /** Equipment Name */
+            equipment_name: string;
+        };
         /**
          * SpecItem
          * @description Характеристика: «Глубина копания» → «5,9 м». Строки, потому что так их пишут люди.
@@ -772,6 +1292,16 @@ export interface components {
             name: string;
             /** Value */
             value: string;
+        };
+        /** SpecTemplateItem */
+        SpecTemplateItem: {
+            /** Name */
+            name: string;
+            /**
+             * Example
+             * @description Пример значения: «20 т», «6×4»
+             */
+            example?: string | null;
         };
         /** TelegramLink */
         TelegramLink: {
@@ -836,6 +1366,22 @@ export interface components {
             created_at: string;
             /** Telegram Connected */
             telegram_connected: boolean;
+        };
+        /** UserReviews */
+        UserReviews: {
+            /** Rating */
+            rating: number | null;
+            /** Count */
+            count: number;
+            /** Items */
+            items: components["schemas"]["ReviewRead"][];
+        };
+        /** UserReviewsSummary */
+        UserReviewsSummary: {
+            /** Rating */
+            rating: number | null;
+            /** Count */
+            count: number;
         };
         /**
          * UserRole
@@ -1030,8 +1576,6 @@ export interface operations {
                 q?: string | null;
                 /** @description Максимальная цена за час */
                 price_max?: number | string | null;
-                /** @description Только с оператором */
-                operator?: boolean | null;
                 lat?: number | null;
                 lon?: number | null;
                 radius_km?: number | null;
@@ -1705,6 +2249,649 @@ export interface operations {
             query?: never;
             header?: never;
             path?: never;
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "geo-geo_status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GeoStatus"];
+                };
+            };
+        };
+    };
+    "geo-geo_search": {
+        parameters: {
+            query: {
+                q: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GeoSuggestion"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "geo-geo_reverse": {
+        parameters: {
+            query: {
+                lat: number;
+                lon: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GeoSuggestion"] | null;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "reviews-review_owner": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                booking_id: number;
+            };
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "reviews-review_renter": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                booking_id: number;
+            };
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "reviews-owner_reviews": {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                owner_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserReviews"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "reviews-renter_reviews": {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                renter_id: number;
+            };
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserReviews"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "reviews-my_ratings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyRatings"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "admin-list_users": {
+        parameters: {
+            query?: {
+                /** @description Имя, email или телефон */
+                q?: string | null;
+                role?: components["schemas"]["UserRole"] | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_AdminUserRead_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "admin-delete_user": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: number;
+            };
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "admin-list_equipment": {
+        parameters: {
+            query?: {
+                /** @description Название техники */
+                q?: string | null;
+                status?: components["schemas"]["EquipmentStatus"] | null;
+                /** @description slug категории */
+                category?: string | null;
+                /** @description Только техника этого владельца */
+                user_id?: number | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_AdminEquipmentRead_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "admin-delete_equipment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                equipment_id: number;
+            };
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "admin-list_bookings": {
+        parameters: {
+            query?: {
+                /** @description Техника, клиент или номер брони */
+                q?: string | null;
+                status?: components["schemas"]["BookingStatus"][] | null;
+                /** @description Брони этого аккаунта: как клиента или как владельца */
+                user_id?: number | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_BookingRead_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "admin-delete_booking": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                booking_id: number;
+            };
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "admin-list_reviews": {
+        parameters: {
+            query?: {
+                direction?: components["schemas"]["ReviewDirection"] | null;
+                /** @description Например, 2 — только плохие отзывы */
+                max_rating?: number | null;
+                /** @description Отзывы этого аккаунта: о нём или от него */
+                user_id?: number | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_AdminReviewRead_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "admin-delete_review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                review_id: number;
+            };
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "admin-create_category": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CategoryWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoryRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "admin-update_category": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                category_id: number;
+            };
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CategoryWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoryRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "admin-delete_category": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                category_id: number;
+            };
             cookie?: {
                 access_token?: string | null;
             };

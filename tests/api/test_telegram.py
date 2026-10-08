@@ -73,7 +73,7 @@ async def test_notifications_follow_the_booking(
     bid = (await renter.post("/api/bookings", json=body)).json()["id"]
     new = telegram[-1]
     assert new["chat_id"] == 1001 and new["parse_mode"] == "HTML"
-    assert "Новая заявка" in new["text"] and "+7 900 111-22-33" in new["text"]
+    assert "Новая заявка" in new["text"] and "+7 (900) 111-22-33" in new["text"]
     # Пользовательский текст экранируется и не ломает разметку
     assert "Иван &lt;b&gt;Петров&lt;/b&gt;" in new["text"] and "&lt;30 м&gt;" in new["text"]
     # На localhost ссылок нет: Telegram не принимает такие адреса в кнопках

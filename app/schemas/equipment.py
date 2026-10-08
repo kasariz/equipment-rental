@@ -7,7 +7,6 @@ from pydantic import (
     ConfigDict,
     Field,
     PlainSerializer,
-    model_validator,
 )
 
 from app.models import EquipmentStatus
@@ -39,12 +38,20 @@ class SpecItem(BaseModel):
 Specs = Annotated[list[SpecItem], Field(max_length=30)]
 
 
+class SpecTemplateItem(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    name: str = Field(min_length=1, max_length=100)
+    example: str | None = Field(default=None, max_length=100, description="Пример значения: «20 т», «6×4»")
+
+
 class CategoryRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
     name: str
     slug: str
+    spec_template: list[SpecTemplateItem] = Field(description="Характеристики для формы добавления техники")
 
 
 class PhotoRead(BaseModel):
@@ -59,6 +66,8 @@ class OwnerPublic(BaseModel):
 
     id: int
     full_name: str
+    rating: float | None = None  # средняя оценка, None — отзывов ещё нет
+    reviews_count: int = 0
 
 
 class EquipmentFields(BaseModel):
@@ -66,26 +75,17 @@ class EquipmentFields(BaseModel):
     category_id: int
     description: str | None = Field(default=None, max_length=5000)
     specs: Specs = []
-    address: str | None = Field(default=None, max_length=255)
+    address: str = Field(min_length=3, max_length=255)
+    address_token: str | None = Field(default=None, description="Подпись адреса из /api/geo/search")
     latitude: float = Field(ge=-90, le=90)
     longitude: float = Field(ge=-180, le=180)
     price_per_hour: Money
     price_per_shift: Money | None = None
     min_hours: int = Field(default=4, ge=1, le=24)
-    operator_available: bool = False
-    operator_price_per_hour: Money | None = None
-
-
-def _check_operator_price(operator_available: bool, price: Decimal | None) -> None:
-    if operator_available and price is None:
-        raise ValueError("Укажите цену оператора за час")
 
 
 class EquipmentCreate(EquipmentFields):
-    @model_validator(mode="after")
-    def operator_price_required(self) -> "EquipmentCreate":
-        _check_operator_price(self.operator_available, self.operator_price_per_hour)
-        return self
+    pass
 
 
 class EquipmentUpdate(BaseModel):
@@ -95,14 +95,13 @@ class EquipmentUpdate(BaseModel):
     category_id: int | None = None
     description: str | None = Field(default=None, max_length=5000)
     specs: Specs | None = None
-    address: str | None = Field(default=None, max_length=255)
+    address: str | None = Field(default=None, min_length=3, max_length=255)
+    address_token: str | None = None
     latitude: float | None = Field(default=None, ge=-90, le=90)
     longitude: float | None = Field(default=None, ge=-180, le=180)
     price_per_hour: Money | None = None
     price_per_shift: Money | None = None
     min_hours: int | None = Field(default=None, ge=1, le=24)
-    operator_available: bool | None = None
-    operator_price_per_hour: Money | None = None
     status: EquipmentStatus | None = None
 
 
@@ -118,11 +117,11 @@ class EquipmentListItem(BaseModel):
     price_per_hour: Money
     price_per_shift: Money | None
     min_hours: int
-    operator_available: bool
-    operator_price_per_hour: Money | None
     status: EquipmentStatus
     cover_url: str | None = None
     distance_km: float | None = None
+    owner_rating: float | None = None
+    owner_reviews_count: int = 0
 
 
 class EquipmentRead(EquipmentListItem):

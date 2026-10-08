@@ -96,6 +96,11 @@ function NavLinks({ className }: { className?: string }) {
           </NavLink>
         </>
       )}
+      {user?.role === 'admin' && (
+        <NavLink to="/admin" className={navLinkClass}>
+          Админка
+        </NavLink>
+      )}
     </nav>
   )
 }

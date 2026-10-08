@@ -13,6 +13,7 @@ from sqlalchemy import select, update
 from sqlalchemy.orm import selectinload
 
 from app.core.config import settings
+from app.core.phone import format_phone
 from app.db.session import SessionLocal
 from app.models import Booking, Equipment, User
 from app.services.telegram import client
@@ -109,11 +110,10 @@ async def load(booking_id: int) -> Booking | None:
 
 
 def header(b: Booking) -> str:
-    operator = ", с оператором" if b.with_operator else ""
     return (
         f"<b>{escape(b.equipment.name)}</b>\n"
         f"{fmt_period(b.period.lower, b.period.upper)}\n"
-        f"{fmt_rate(b)}{operator}, {fmt_rub(b.total_price)}"
+        f"{fmt_rate(b)}, {fmt_rub(b.total_price)}"
     )
 
 
@@ -130,7 +130,7 @@ async def booking_event(booking_id: int, event: str) -> None:
             header(b),
             "",
             f"Клиент: {escape(client_user.full_name)}",
-            f"Телефон: {escape(b.contact_phone)}",
+            f"Телефон: {escape(format_phone(b.contact_phone))}",
         ]
         if b.delivery_address:
             lines.append(f"Адрес объекта: {escape(b.delivery_address)}")
@@ -144,7 +144,7 @@ async def booking_event(booking_id: int, event: str) -> None:
         await send(owner, "\n".join(lines), site_button("Открыть заявки", "/my/requests"))
 
     elif event == "confirmed":
-        phone = f", {escape(owner.phone)}" if owner.phone else ""
+        phone = f", {escape(format_phone(owner.phone))}" if owner.phone else ""
         text = f"✅ <b>Бронь подтверждена</b>\n{header(b)}\n\nВладелец: {escape(owner.full_name)}{phone}"
         await send(client_user, text, site_button("Мои брони", "/bookings"))
 

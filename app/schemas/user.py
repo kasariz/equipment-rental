@@ -3,6 +3,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
+from app.core.phone import Phone
 from app.models import UserRole
 
 
@@ -10,7 +11,7 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8, max_length=128)
     full_name: str = Field(min_length=2, max_length=255)
-    phone: str | None = Field(default=None, max_length=32)
+    phone: Phone | None = None
     # Админа через регистрацию создать нельзя
     role: Literal[UserRole.client, UserRole.owner] = UserRole.client
 
@@ -19,7 +20,12 @@ class UserCreate(BaseModel):
     def normalize_email(cls, v: str) -> str:
         return v.lower()
 
-    @field_validator("full_name", "phone")
+    @field_validator("phone", mode="before")
+    @classmethod
+    def empty_phone_is_none(cls, v: str | None) -> str | None:
+        return v or None
+
+    @field_validator("full_name")
     @classmethod
     def strip(cls, v: str | None) -> str | None:
         if v is None:

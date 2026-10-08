@@ -8,8 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.api.deps import CurrentUser, OwnerUser, SessionDep
+from app.api.routes.geo import ensure_normalized
 from app.core.config import settings
-from app.models import Booking, BookingStatus, Equipment, EquipmentStatus, User, UserRole
+from app.models import Booking, BookingStatus, Equipment, EquipmentStatus, ReviewDirection, User, UserRole
 from app.schemas.booking import (
     BookingCreate,
     BookingEquipment,
@@ -21,6 +22,7 @@ from app.schemas.booking import (
     RejectBody,
 )
 from app.services.pricing import PricingError, Quote, calculate
+from app.services.ratings import user_ratings
 from app.services.telegram.notifications import booking_event
 
 router = APIRouter(tags=["bookings"])
@@ -60,7 +62,7 @@ async def quote_for(session: AsyncSession, params: BookingParams) -> tuple[Equip
         raise unprocessable(f"Бронировать можно не дальше чем на {settings.booking_max_days_ahead} дней вперёд")
 
     try:
-        quote = calculate(eq, params.rate_type, params.start, params.quantity, params.with_operator)
+        quote = calculate(eq, params.rate_type, params.start, params.quantity)
     except PricingError as e:
         raise unprocessable(str(e)) from e
     return eq, quote
@@ -85,7 +87,18 @@ def booking_options():
         selectinload(Booking.equipment).selectinload(Equipment.category),
         selectinload(Booking.equipment).selectinload(Equipment.owner),
         selectinload(Booking.user),
+        selectinload(Booking.reviews),
     )
+
+
+async def with_renter_ratings(session: AsyncSession, items: list[BookingRead]) -> list[BookingRead]:
+    ratings = await user_ratings(
+        session, [i.client.id for i in items if i.client and i.client.id], ReviewDirection.about_renter
+    )
+    for item in items:
+        if item.client and item.client.id in ratings:
+            item.client.rating, item.client.reviews_count = ratings[item.client.id]
+    return items
 
 
 def to_read(b: Booking, *, for_owner: bool) -> BookingRead:
@@ -100,15 +113,14 @@ def to_read(b: Booking, *, for_owner: bool) -> BookingRead:
         quantity=b.quantity,
         start=b.period.lower,
         end=b.period.upper,
-        with_operator=b.with_operator,
         delivery_address=b.delivery_address,
         comment=b.comment,
         contact_phone=b.contact_phone,
         reject_reason=b.reject_reason,
-        rental_price=b.rental_price,
-        operator_price=b.operator_price,
         total_price=b.total_price,
         created_at=b.created_at,
+        reviewed=any(r.direction == ReviewDirection.about_owner for r in b.reviews),
+        renter_reviewed=any(r.direction == ReviewDirection.about_renter for r in b.reviews),
         equipment=BookingEquipment(
             id=eq.id,
             name=eq.name,
@@ -116,7 +128,7 @@ def to_read(b: Booking, *, for_owner: bool) -> BookingRead:
             address=eq.address,
             cover_url=eq.photos[0].url if eq.photos else None,
         ),
-        client=Contact(full_name=b.user.full_name, phone=b.contact_phone) if for_owner else None,
+        client=Contact(id=b.user_id, full_name=b.user.full_name, phone=b.contact_phone) if for_owner else None,
         owner=owner,
     )
 
@@ -218,8 +230,6 @@ async def quote_booking(params: BookingParams, session: SessionDep) -> QuoteRead
         start=q.start,
         end=q.end,
         billable_hours=q.billable_hours,
-        rental_price=q.rental_price,
-        operator_price=q.operator_price,
         total_price=q.total_price,
         available=await is_free(session, eq.id, q.start, q.end),
     )
@@ -233,18 +243,17 @@ async def create_booking(
     if eq.owner_id == user.id:
         raise unprocessable("Нельзя арендовать собственную технику")
 
+    ensure_normalized(data.delivery_address, data.delivery_address_token)
     booking = Booking(
         user_id=user.id,
         equipment_id=eq.id,
         period=Range(q.start, q.end, bounds="[)"),
         rate_type=data.rate_type.value,
         quantity=data.quantity,
-        with_operator=data.with_operator,
         delivery_address=data.delivery_address or None,
         contact_phone=data.contact_phone,
         comment=data.comment or None,
-        rental_price=q.rental_price,
-        operator_price=q.operator_price,
+        rental_price=q.total_price,  # оператор включён: вся сумма — аренда
         total_price=q.total_price,
     )
     session.add(booking)
@@ -307,8 +316,8 @@ async def owner_bookings(
         stmt = stmt.where(Equipment.owner_id == user.id)
     if statuses:
         stmt = stmt.where(Booking.status.in_(statuses))
-    rows = await session.scalars(stmt.order_by(func.lower(Booking.period)))
-    return [to_read(b, for_owner=True) for b in rows]
+    bookings = list(await session.scalars(stmt.order_by(func.lower(Booking.period))))
+    return await with_renter_ratings(session, [to_read(b, for_owner=True) for b in bookings])
 
 
 async def owner_action(booking_id: int, action: str, session: AsyncSession, user: User) -> Booking:

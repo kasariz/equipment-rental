@@ -229,7 +229,7 @@ async def seed_equipment() -> None:
             email=DEMO_EMAIL,
             hashed_password=hash_password(DEMO_PASSWORD),
             full_name="Сергей Демидов",
-            phone="+7 900 000-00-00",
+            phone="+79000000000",
             role=UserRole.owner,
         )
         session.add(owner)
@@ -244,11 +244,10 @@ async def seed_equipment() -> None:
                     address=address,
                     latitude=lat,
                     longitude=lon,
-                    price_per_hour=Decimal(hour),
-                    price_per_shift=Decimal(shift),
+                    # Цены с оператором: к ставке за технику прибавляем работу машиниста
+                    price_per_hour=Decimal(hour + (op or 500)),
+                    price_per_shift=Decimal(shift + 8 * (op or 500)),
                     min_hours=min_h,
-                    operator_available=op is not None,
-                    operator_price_per_hour=Decimal(op) if op else None,
                     specs=[{"name": k, "value": v} for k, v in specs.items()],
                     description="Техника в рабочем состоянии, регулярное ТО. Доставка тралом по договорённости.",
                 )
@@ -267,19 +266,19 @@ async def seed_bookings() -> None:
             email=CLIENT_EMAIL,
             hashed_password=hash_password(DEMO_PASSWORD),
             full_name="Ирина Строева",
-            phone="+7 905 123-45-67",
+            phone="+79051234567",
         )
         session.add(client)
         owner = await session.scalar(select(User).where(User.email == DEMO_EMAIL))
         items = list(await session.scalars(select(Equipment).where(Equipment.owner_id == owner.id).limit(2)))
 
         day = datetime.now(MSK).replace(hour=8, minute=0, second=0, microsecond=0)
-        plans = [  # (техника, через сколько дней, тариф, количество, оператор, статус, комментарий)
-            (items[0], 2, RateType.hourly, 6, True, BookingStatus.pending, "Траншея под водопровод, около 40 метров"),
-            (items[1], 4, RateType.shift, 2, False, BookingStatus.confirmed, None),
+        plans = [  # (техника, через сколько дней, тариф, количество, статус, комментарий)
+            (items[0], 2, RateType.hourly, 6, BookingStatus.pending, "Траншея под водопровод, около 40 метров"),
+            (items[1], 4, RateType.shift, 2, BookingStatus.confirmed, None),
         ]
-        for eq, days, rate, qty, operator, status, comment in plans:
-            q = calculate(eq, rate, day + timedelta(days=days), qty, operator and eq.operator_available)
+        for eq, days, rate, qty, status, comment in plans:
+            q = calculate(eq, rate, day + timedelta(days=days), qty)
             session.add(
                 Booking(
                     user=client,
@@ -287,12 +286,10 @@ async def seed_bookings() -> None:
                     period=Range(q.start, q.end, bounds="[)"),
                     rate_type=rate.value,
                     quantity=qty,
-                    with_operator=operator and eq.operator_available,
                     contact_phone=client.phone,
                     delivery_address="Ростов-на-Дону, ул. Малиновского, участок 12",
                     comment=comment,
-                    rental_price=q.rental_price,
-                    operator_price=q.operator_price,
+                    rental_price=q.total_price,
                     total_price=q.total_price,
                     status=status,
                 )

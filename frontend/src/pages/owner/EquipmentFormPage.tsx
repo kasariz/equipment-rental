@@ -1,13 +1,15 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQueryClient } from '@tanstack/react-query'
 import { ImagePlus, Plus, Trash2, X } from 'lucide-react'
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form'
 import { Link, useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
 import { z } from 'zod'
-import type { Equipment, EquipmentStatus, Photo } from '@/api/client'
+import type { Category, Equipment, EquipmentStatus, Photo } from '@/api/client'
+import { AddressInput } from '@/components/AddressInput'
 import { LocationPicker } from '@/components/map/LocationPicker'
+import { reverseGeocode, useGeoStatus } from '@/features/geo/api'
 import { PageSpinner } from '@/components/PageSpinner'
 import { Button } from '@/components/ui/button'
 import { Field } from '@/components/ui/field'
@@ -33,45 +35,54 @@ const schema = z
     category_id: z.string().min(1, 'Выберите категорию'),
     description: z.string().max(5000),
     specs: z.array(z.object({ name: z.string().trim().max(100), value: z.string().trim().max(200) })).max(30),
-    address: z.string().trim().max(255),
+    address: z.object({ address: z.string(), token: z.string().nullable() }).nullable(),
     location: z.object({ lat: z.number(), lng: z.number() }).nullable(),
     price_per_hour: z.string().trim().regex(MONEY_RE, 'Введите цену, например 2500'),
     price_per_shift: z.string().trim().refine((v) => v === '' || MONEY_RE.test(v), 'Введите цену, например 18000'),
     min_hours: z.string().regex(/^\d+$/, 'Целое число часов').refine((v) => +v >= 1 && +v <= 24, 'От 1 до 24 часов'),
-    operator_available: z.boolean(),
-    operator_price_per_hour: z.string().trim(),
     status: z.enum(['available', 'maintenance', 'inactive']),
   })
   .superRefine((v, ctx) => {
+    if (!v.address) {
+      ctx.addIssue({ code: 'custom', path: ['address'], message: 'Выберите адрес из подсказок или кликните по карте' })
+    }
     if (!v.location) {
       ctx.addIssue({ code: 'custom', path: ['location'], message: 'Отметьте на карте, где стоит техника' })
     }
     if (toNumber(v.price_per_hour) <= 0) {
       ctx.addIssue({ code: 'custom', path: ['price_per_hour'], message: 'Цена должна быть больше нуля' })
     }
-    if (v.operator_available && !MONEY_RE.test(v.operator_price_per_hour)) {
-      ctx.addIssue({ code: 'custom', path: ['operator_price_per_hour'], message: 'Укажите цену оператора за час' })
-    }
     v.specs.forEach((s, i) => {
-      if (s.name && !s.value) ctx.addIssue({ code: 'custom', path: ['specs', i, 'value'], message: 'Укажите значение' })
       if (!s.name && s.value) ctx.addIssue({ code: 'custom', path: ['specs', i, 'name'], message: 'Укажите название' })
     })
   })
 type FormValues = z.infer<typeof schema>
+type Spec = FormValues['specs'][number]
+type TemplateItem = Category['spec_template'][number]
 
 const emptyValues: FormValues = {
   name: '',
   category_id: '',
   description: '',
-  specs: [{ name: '', value: '' }],
-  address: '',
+  specs: [],
+  address: null,
   location: null,
   price_per_hour: '',
   price_per_shift: '',
   min_hours: '4',
-  operator_available: false,
-  operator_price_per_hour: '',
   status: 'available',
+}
+
+/**
+ * Подставляет характеристики категории: заполненные строки сохраняются,
+ * недостающие названия из шаблона добавляются пустыми, пустые чужие строки убираются
+ */
+function mergeTemplate(current: Spec[], template: TemplateItem[]): Spec[] {
+  const names = template.map((t) => t.name)
+  const filled = current.filter((s) => s.value.trim())
+  const fromTemplate = names.map((name) => filled.find((s) => s.name === name) ?? { name, value: '' })
+  const extra = filled.filter((s) => !names.includes(s.name))
+  return [...fromTemplate, ...extra]
 }
 
 function fromEquipment(e: Equipment): FormValues {
@@ -79,14 +90,13 @@ function fromEquipment(e: Equipment): FormValues {
     name: e.name,
     category_id: String(e.category.id),
     description: e.description ?? '',
-    specs: e.specs.length ? e.specs : [{ name: '', value: '' }],
-    address: e.address ?? '',
+    specs: e.specs,
+    // Старый адрес без подписи геокодера: при сохранении попросим выбрать его заново
+    address: e.address ? { address: e.address, token: null } : null,
     location: { lat: e.latitude, lng: e.longitude },
     price_per_hour: String(e.price_per_hour),
     price_per_shift: e.price_per_shift != null ? String(e.price_per_shift) : '',
     min_hours: String(e.min_hours),
-    operator_available: e.operator_available,
-    operator_price_per_hour: e.operator_price_per_hour != null ? String(e.operator_price_per_hour) : '',
     status: e.status,
   }
 }
@@ -97,14 +107,13 @@ function toBody(v: FormValues): EquipmentCreateBody {
     category_id: Number(v.category_id),
     description: v.description.trim() || null,
     specs: v.specs.filter((s) => s.name && s.value),
-    address: v.address.trim() || null,
+    address: v.address!.address,
+    address_token: v.address!.token,
     latitude: v.location!.lat,
     longitude: v.location!.lng,
     price_per_hour: toNumber(v.price_per_hour),
     price_per_shift: v.price_per_shift ? toNumber(v.price_per_shift) : null,
     min_hours: Number(v.min_hours),
-    operator_available: v.operator_available,
-    operator_price_per_hour: v.operator_price_per_hour ? toNumber(v.operator_price_per_hour) : null,
   }
 }
 
@@ -229,12 +238,53 @@ function EquipmentForm({ item }: { item?: Equipment }) {
   const [removedPhotoIds, setRemovedPhotoIds] = useState<number[]>([])
   const [savingPhotos, setSavingPhotos] = useState(false)
 
-  const { register, control, handleSubmit, reset, formState: { errors, isDirty } } = useForm<FormValues>({
+  const { register, control, handleSubmit, reset, setValue, getValues, formState: { errors, isDirty } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: item ? fromEquipment(item) : emptyValues,
   })
   const specs = useFieldArray({ control, name: 'specs' })
-  const operatorAvailable = useWatch({ control, name: 'operator_available' })
+  const location = useWatch({ control, name: 'location' })
+  const categoryId = useWatch({ control, name: 'category_id' })
+  const watchedSpecs = useWatch({ control, name: 'specs' })
+  const { examples, allSpecNames } = useMemo(() => {
+    const own = categories?.find((c) => String(c.id) === categoryId)?.spec_template ?? []
+    const map = new Map<string, string>()
+    for (const t of [...own, ...(categories ?? []).flatMap((c) => c.spec_template)]) {
+      if (t.example && !map.has(t.name)) map.set(t.name, t.example)
+    }
+    return { examples: map, allSpecNames: [...new Set((categories ?? []).flatMap((c) => c.spec_template.map((t) => t.name)))].sort() }
+  }, [categories, categoryId])
+  const [locating, setLocating] = useState(false)
+  const { data: geo } = useGeoStatus()
+
+  // Подставить шаблон характеристик, когда выбрали категорию (и один раз при редактировании)
+  const applyTemplate = (categoryId: string, dirty: boolean) => {
+    const template = categories?.find((c) => String(c.id) === categoryId)?.spec_template ?? []
+    setValue('specs', mergeTemplate(getValues('specs'), template), { shouldDirty: dirty })
+  }
+  // При редактировании один раз добавляем характеристики категории, которых ещё нет в объявлении
+  const templateApplied = useRef(false)
+  useEffect(() => {
+    if (templateApplied.current || !categories || !item) return
+    templateApplied.current = true
+    const template = categories.find((c) => c.id === item.category.id)?.spec_template ?? []
+    setValue('specs', mergeTemplate(getValues('specs'), template), { shouldDirty: false })
+  }, [categories, item, setValue, getValues])
+
+  // Клик по карте или перетаскивание метки — подставляем адрес этой точки
+  const onMapPick = async (point: { lat: number; lng: number }) => {
+    setValue('location', point, { shouldDirty: true, shouldValidate: true })
+    if (!geo?.enabled) return
+    setLocating(true)
+    try {
+      const found = await reverseGeocode(point.lat, point.lng)
+      if (found) setValue('address', { address: found.address, token: found.token }, { shouldDirty: true, shouldValidate: true })
+    } catch {
+      toast.error('Не удалось определить адрес точки. Введите его вручную')
+    } finally {
+      setLocating(false)
+    }
+  }
 
   const savedPhotos = item?.photos.filter((p) => !removedPhotoIds.includes(p.id)) ?? []
   const photosChanged = newFiles.length > 0 || removedPhotoIds.length > 0
@@ -244,7 +294,12 @@ function EquipmentForm({ item }: { item?: Equipment }) {
 
     if (item) {
       try {
-        if (isDirty) await update.mutateAsync({ ...body, status: values.status })
+        if (isDirty) {
+          // Адрес без подписи геокодера — это старый адрес, который не меняли. Не отправляем его,
+          // иначе сервер попросит выбрать адрес из подсказок заново
+          const { address, address_token, ...rest } = body
+          await update.mutateAsync({ ...rest, ...(address_token ? { address, address_token } : {}), status: values.status })
+        }
         if (photosChanged) {
           setSavingPhotos(true)
           // Сначала удаляем: иначе можно упереться в лимит 10 фото при замене снимков
@@ -299,7 +354,7 @@ function EquipmentForm({ item }: { item?: Equipment }) {
           <Input id="name" placeholder="JCB 3CX Super" {...err('name', errors.name?.message)} {...register('name')} />
         </Field>
         <Field id="category_id" label="Категория" error={errors.category_id?.message}>
-          <select id="category_id" className={selectClass} {...err('category_id', errors.category_id?.message)} {...register('category_id')}>
+          <select id="category_id" className={selectClass} {...err('category_id', errors.category_id?.message)} {...register('category_id', { onChange: (e) => applyTemplate(e.target.value, true) })}>
             <option value="">Выберите категорию</option>
             {categories?.map((c) => (
               <option key={c.id} value={c.id}>
@@ -338,7 +393,7 @@ function EquipmentForm({ item }: { item?: Equipment }) {
         />
       </Section>
 
-      <Section title="Цены">
+      <Section title="Цены" hint="С оператором: технику без машиниста не сдают">
         <div className="grid gap-5 sm:grid-cols-2">
           <Field id="price_per_hour" label="За час, ₽" error={errors.price_per_hour?.message}>
             <Input id="price_per_hour" inputMode="decimal" placeholder="2500" {...err('price_per_hour', errors.price_per_hour?.message)} {...register('price_per_hour')} />
@@ -350,32 +405,34 @@ function EquipmentForm({ item }: { item?: Equipment }) {
             <Input id="min_hours" inputMode="numeric" {...err('min_hours', errors.min_hours?.message)} {...register('min_hours')} />
           </Field>
         </div>
-        <label className="flex items-center gap-2.5 text-[15px]">
-          <input type="checkbox" className="size-4 accent-ink" {...register('operator_available')} />
-          Могу предоставить оператора
-        </label>
-        {operatorAvailable && (
-          <div className="sm:w-1/2 sm:pr-2.5">
-            <Field id="operator_price_per_hour" label="Оператор за час, ₽" error={errors.operator_price_per_hour?.message}>
-              <Input
-                id="operator_price_per_hour"
-                inputMode="decimal"
-                placeholder="600"
-                {...err('operator_price_per_hour', errors.operator_price_per_hour?.message)}
-                {...register('operator_price_per_hour')}
-              />
-            </Field>
-          </div>
-        )}
       </Section>
 
-      <Section title="Где стоит техника" hint="Кликните по карте, чтобы поставить метку. Её можно перетащить">
+      <Section title="Где стоит техника" hint="Найдите адрес или кликните по карте — адрес подставится сам. Метку можно перетащить">
+        <Controller
+          control={control}
+          name="address"
+          render={({ field, fieldState }) => (
+            <Field id="address" label="Адрес" error={fieldState.error?.message} hint={locating ? 'Определяем адрес точки…' : 'Арендаторы увидят его в объявлении'}>
+              <AddressInput
+                id="address"
+                value={field.value}
+                invalid={Boolean(fieldState.error)}
+                describedBy={fieldState.error ? 'address-error' : 'address-hint'}
+                onChange={(v) => {
+                  field.onChange(v)
+                  // Выбрали адрес из подсказок — переносим туда метку
+                  if (v?.lat != null && v.lon != null) setValue('location', { lat: v.lat, lng: v.lon }, { shouldDirty: true, shouldValidate: true })
+                }}
+              />
+            </Field>
+          )}
+        />
         <Controller
           control={control}
           name="location"
           render={({ field, fieldState }) => (
             <div className="flex flex-col gap-1.5">
-              <LocationPicker value={field.value} onChange={field.onChange} invalid={Boolean(fieldState.error)} />
+              <LocationPicker value={location ?? field.value} onChange={onMapPick} invalid={Boolean(fieldState.error)} />
               {fieldState.error && (
                 <p role="alert" className="text-sm text-danger">
                   {fieldState.error.message}
@@ -384,18 +441,16 @@ function EquipmentForm({ item }: { item?: Equipment }) {
             </div>
           )}
         />
-        <Field id="address" label="Адрес для арендаторов (необязательно)" hint="Район или улица, без номера дома">
-          <Input id="address" placeholder="Ростов-на-Дону, Западный жилмассив" {...register('address')} />
-        </Field>
       </Section>
 
-      <Section title="Характеристики" hint="То, по чему выбирают технику: глубина копания, грузоподъёмность, масса">
+      <Section title="Характеристики" hint="Названия подставляются по категории. Заполните то, что знаете, пустые строки не сохранятся">
         <ul className="flex flex-col gap-3">
           {specs.fields.map((f, i) => (
             <li key={f.id} className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-start gap-2">
               <div>
                 <Input
-                  placeholder="Глубина копания"
+                  list="spec-names"
+                  placeholder="Начните вводить: масса, объём…"
                   aria-label={`Характеристика ${i + 1}: название`}
                   aria-invalid={Boolean(errors.specs?.[i]?.name)}
                   {...register(`specs.${i}.name`)}
@@ -404,7 +459,7 @@ function EquipmentForm({ item }: { item?: Equipment }) {
               </div>
               <div>
                 <Input
-                  placeholder="5,9 м"
+                  placeholder={examples.get(watchedSpecs?.[i]?.name ?? '') ?? 'Значение с единицами'}
                   aria-label={`Характеристика ${i + 1}: значение`}
                   aria-invalid={Boolean(errors.specs?.[i]?.value)}
                   {...register(`specs.${i}.value`)}
@@ -417,6 +472,14 @@ function EquipmentForm({ item }: { item?: Equipment }) {
             </li>
           ))}
         </ul>
+        {/* Подсказки названий: все характеристики из всех категорий. Пример значения подставится сам */}
+        <datalist id="spec-names">
+          {allSpecNames.map((name) => (
+            <option key={name} value={name}>
+              {examples.get(name)}
+            </option>
+          ))}
+        </datalist>
         {specs.fields.length < 30 && (
           <Button type="button" variant="outline" size="sm" className="self-start" onClick={() => specs.append({ name: '', value: '' })}>
             <Plus />

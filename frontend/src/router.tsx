@@ -5,6 +5,7 @@ import { PageSpinner } from '@/components/PageSpinner'
 import { RequireAuth } from '@/features/auth/RequireAuth'
 import { HomePage } from '@/pages/HomePage'
 import {
+  AdminPage,
   CatalogPage,
   EquipmentCreatePage,
   EquipmentEditPage,
@@ -36,6 +37,7 @@ export const router = createBrowserRouter([
       { path: 'my/equipment', element: ownerOnly(<MyEquipmentPage />) },
       { path: 'my/equipment/new', element: ownerOnly(<EquipmentCreatePage />) },
       { path: 'my/equipment/:id/edit', element: ownerOnly(<EquipmentEditPage />) },
+      { path: 'admin', element: page(<RequireAuth roles={['admin']}><AdminPage /></RequireAuth>) },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

@@ -1,7 +1,7 @@
 import type { YMap } from '@yandex/ymaps3-types'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
-import { DEFAULT_CENTER, DEFAULT_ZOOM, toLngLat, type YMapsComponents } from '@/lib/ymaps'
+import { boundsContain, DEFAULT_CENTER, DEFAULT_ZOOM, toLngLat, type YMapsComponents } from '@/lib/ymaps'
 import { MapFrame, ZoomButtons } from './MapFrame'
 
 type Point = { lat: number; lng: number }
@@ -14,6 +14,15 @@ function Picker({ y, value, onChange }: Props & { y: YMapsComponents }) {
   const [initial] = useState(() =>
     value ? { center: toLngLat(value.lat, value.lng), zoom: 14 } : { center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM },
   )
+
+  // Точку поменяли снаружи (выбрали адрес из подсказок) и она за краем карты — показываем её.
+  // Клик по карте всегда внутри видимой области, поэтому от кликов карта не прыгает
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !value) return
+    const point = toLngLat(value.lat, value.lng)
+    if (!boundsContain(map.bounds, point)) map.setLocation({ center: point, zoom: Math.max(map.zoom, 14), duration: 300 })
+  }, [value])
 
   return (
     <div className="relative size-full">

@@ -4,7 +4,6 @@ from decimal import Decimal
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
-    Boolean,
     CheckConstraint,
     DateTime,
     Enum,
@@ -23,6 +22,7 @@ from app.db.base import Base
 
 if TYPE_CHECKING:
     from app.models.equipment import Equipment
+    from app.models.review import Review
     from app.models.user import User
 
 
@@ -70,7 +70,6 @@ class Booking(Base):
     rate_type: Mapped[str] = mapped_column(String(16), server_default=RateType.hourly.value)
     quantity: Mapped[int] = mapped_column(Integer, server_default="1")
 
-    with_operator: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     delivery_address: Mapped[str | None] = mapped_column(String(500))
     contact_phone: Mapped[str] = mapped_column(String(32))
     comment: Mapped[str | None] = mapped_column(Text)
@@ -78,7 +77,6 @@ class Booking(Base):
 
     # Цена фиксируется в момент заявки: если владелец потом поменяет прайс, бронь не изменится
     rental_price: Mapped[Decimal] = mapped_column(Numeric(12, 2), server_default="0")
-    operator_price: Mapped[Decimal] = mapped_column(Numeric(12, 2), server_default="0")
     total_price: Mapped[Decimal] = mapped_column(Numeric(12, 2))
 
     status: Mapped[BookingStatus] = mapped_column(
@@ -93,3 +91,4 @@ class Booking(Base):
 
     user: Mapped["User"] = relationship(lazy="raise")
     equipment: Mapped["Equipment"] = relationship(lazy="raise")
+    reviews: Mapped[list["Review"]] = relationship(back_populates="booking", lazy="raise")

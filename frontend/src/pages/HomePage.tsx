@@ -1,10 +1,14 @@
 import { Link } from 'react-router'
 import { Button } from '@/components/ui/button'
+import { useMe } from '@/features/auth/api'
 import { useCategories } from '@/features/catalog/api'
 
 
 export function HomePage() {
   const { data: categories } = useCategories()
+  const { data: user } = useMe()
+  // Владельцу — сразу в его технику, остальным — регистрация владельца
+  const rentOutLink = user?.role === 'owner' || user?.role === 'admin' ? '/my/equipment' : '/register?role=owner'
   return (
     <>
       <section className="mx-auto max-w-6xl px-4 pt-14 pb-16 sm:px-6 sm:pt-24 sm:pb-24">
@@ -13,14 +17,14 @@ export function HomePage() {
         </h1>
         <p className="mt-6 max-w-2xl text-lg text-steel">
           Экскаваторы, краны, погрузчики и самосвалы от владельцев поблизости. Выберите технику на карте,
-          укажите время и адрес, при необходимости добавьте оператора и доставку.
+          укажите время и адрес. Техника приезжает с оператором.
         </p>
         <div className="mt-10 flex flex-wrap gap-3">
           <Button asChild size="lg">
             <Link to="/catalog">Найти технику</Link>
           </Button>
           <Button asChild size="lg" variant="outline">
-            <Link to="/register?role=owner">Сдать свою технику</Link>
+            <Link to={rentOutLink}>Сдать свою технику</Link>
           </Button>
         </div>
       </section>

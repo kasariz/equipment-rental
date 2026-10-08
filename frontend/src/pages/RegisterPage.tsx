@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { HardHat, Truck } from 'lucide-react'
-import { useForm, useWatch } from 'react-hook-form'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
 import { z } from 'zod'
@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/ui/password-input'
+import { PhoneInput } from '@/components/ui/phone-input'
+import { isCompletePhone } from '@/lib/phone'
 import { useMe, useRegister } from '@/features/auth/api'
 import { cn } from '@/lib/utils'
 import { AuthShell } from './AuthShell'
@@ -16,10 +18,7 @@ const schema = z.object({
   role: z.enum(['client', 'owner']),
   full_name: z.string().trim().min(2, 'Введите имя и фамилию'),
   email: z.email('Введите email в формате name@example.ru'),
-  phone: z
-    .string()
-    .trim()
-    .regex(/^$|^\+?[\d\s()-]{10,20}$/, 'Введите номер в формате +7 900 123-45-67'),
+  phone: z.string().refine((v) => v === '' || isCompletePhone(v), 'Введите номер полностью: +7 и 10 цифр'),
   password: z.string().min(8, 'Пароль должен быть не короче 8 символов').max(128),
 })
 type FormValues = z.infer<typeof schema>
@@ -57,7 +56,10 @@ export function RegisterPage() {
   })
   const selectedRole = useWatch({ control, name: 'role' })
 
-  if (user && !registerUser.isSuccess) return <Navigate to="/profile" replace />
+  if (user && !registerUser.isSuccess) {
+    const isOwner = user.role === 'owner' || user.role === 'admin'
+    return <Navigate to={isOwner ? '/my/equipment' : '/profile'} replace />
+  }
 
   const onSubmit = ({ phone, ...values }: FormValues) =>
     registerUser.mutate(
@@ -126,14 +128,19 @@ export function RegisterPage() {
           hint={selectedRole === 'owner' ? 'По нему арендаторы свяжутся с вами' : 'По нему владелец техники свяжется с вами'}
           error={errors.phone?.message}
         >
-          <Input
-            id="phone"
-            type="tel"
-            autoComplete="tel"
-            placeholder="+7 900 123-45-67"
-            aria-invalid={!!errors.phone}
-            aria-describedby={errors.phone ? 'phone-error' : 'phone-hint'}
-            {...register('phone')}
+          <Controller
+            control={control}
+            name="phone"
+            render={({ field }) => (
+              <PhoneInput
+                id="phone"
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                aria-invalid={!!errors.phone}
+                aria-describedby={errors.phone ? 'phone-error' : 'phone-hint'}
+              />
+            )}
           />
         </Field>
 

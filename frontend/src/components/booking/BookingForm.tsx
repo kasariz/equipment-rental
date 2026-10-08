@@ -5,7 +5,10 @@ import type { Equipment, RateType } from '@/api/client'
 import { Button } from '@/components/ui/button'
 import { Field } from '@/components/ui/field'
 import { HorizontalScroller } from '@/components/ui/horizontal-scroller'
-import { Input } from '@/components/ui/input'
+import { PhoneInput } from '@/components/ui/phone-input'
+import { AddressInput } from '@/components/AddressInput'
+import type { PickedAddress } from '@/features/geo/api'
+import { formatPhone, isCompletePhone } from '@/lib/phone'
 import { useMe } from '@/features/auth/api'
 import { useTelegramStatus } from '@/features/telegram/api'
 import { useNow } from '@/hooks/useNow'
@@ -19,7 +22,6 @@ const DAYS_SHOWN = 30
 const FIRST_HOUR = 6
 const LAST_HOUR = 20
 const MAX_HOURS = 12
-const PHONE_RE = /^\+?[\d\s()-]{10,20}$/
 
 const weekdayFmt = new Intl.DateTimeFormat('ru-RU', { weekday: 'short' })
 const monthFmt = new Intl.DateTimeFormat('ru-RU', { month: 'short' })
@@ -67,16 +69,17 @@ export function BookingForm({ item }: { item: Equipment }) {
   const [shifts, setShifts] = useState(1)
   const [day, setDay] = useState<Date | null>(null)
   const [hour, setHour] = useState(8)
-  const [withOperator, setWithOperator] = useState(false)
   const [phone, setPhone] = useState<string | null>(null) // null — ещё не трогали, берём из профиля
-  const [address, setAddress] = useState('')
+  const [address, setAddress] = useState<PickedAddress | null>(null)
+  const [addressText, setAddressText] = useState(false) // начали вводить адрес, но не выбрали из списка
+  const [addressError, setAddressError] = useState<string | null>(null)
   const [comment, setComment] = useState('')
   const [phoneError, setPhoneError] = useState<string | null>(null)
 
   const quantity = rate === 'hourly' ? hours : shifts
   const duration = durationHours(rate, quantity)
   const busy = useMemo(() => busyQuery.data ?? [], [busyQuery.data])
-  const phoneValue = phone ?? user?.phone ?? ''
+  const phoneValue = phone ?? (user?.phone ? formatPhone(user.phone) : '')
 
   // Свободные часы начала для дня с учётом длительности и чужих броней
   const startsFor = useMemo(() => {
@@ -110,7 +113,6 @@ export function BookingForm({ item }: { item: Equipment }) {
         rate_type: rate,
         start: toLocalISO(selectedStart.start),
         quantity,
-        with_operator: withOperator,
       }
     : null
   const quote = useQuote(params)
@@ -120,15 +122,20 @@ export function BookingForm({ item }: { item: Equipment }) {
 
   const submit = () => {
     if (!params) return
-    if (!PHONE_RE.test(phoneValue.trim())) {
-      setPhoneError('Введите номер в формате +7 900 123-45-67')
+    if (!isCompletePhone(phoneValue)) {
+      setPhoneError('Введите номер полностью: +7 и 10 цифр')
       return
     }
     setPhoneError(null)
+    if (addressText && !address) {
+      setAddressError('Выберите адрес из списка подсказок или очистите поле')
+      return
+    }
     create.mutate({
       ...params,
-      contact_phone: phoneValue.trim(),
-      delivery_address: address.trim() || null,
+      contact_phone: phoneValue,
+      delivery_address: address?.address ?? null,
+      delivery_address_token: address?.token ?? null,
       comment: comment.trim() || null,
     })
   }
@@ -259,17 +266,6 @@ export function BookingForm({ item }: { item: Equipment }) {
         <p className="text-sm text-danger">В ближайший месяц свободного времени под такую длительность нет.</p>
       )}
 
-      {item.operator_available && item.operator_price_per_hour != null && (
-        <label className="flex items-center gap-2.5 text-[15px]">
-          <input
-            type="checkbox"
-            checked={withOperator}
-            onChange={(e) => setWithOperator(e.target.checked)}
-            className="size-4 accent-ink"
-          />
-          С оператором, +{formatRub(item.operator_price_per_hour)} в час
-        </label>
-      )}
 
       {/* Расчёт */}
       {quote.data && params && (
@@ -282,14 +278,8 @@ export function BookingForm({ item }: { item: Equipment }) {
                   ? `${hours} ч × ${formatRub(item.price_per_hour)}`
                   : `${shifts} ${pluralize(shifts, ['смена', 'смены', 'смен'])} × ${formatRub(shiftPrice)}`}
               </dt>
-              <dd>{formatRub(quote.data.rental_price)}</dd>
+              <dd>{formatRub(quote.data.total_price)}</dd>
             </div>
-            {withOperator && (
-              <div className="flex justify-between gap-3">
-                <dt className="text-steel">Оператор, {quote.data.billable_hours} ч</dt>
-                <dd>{formatRub(quote.data.operator_price)}</dd>
-              </div>
-            )}
             <div className="mt-1 flex justify-between gap-3 border-t border-line pt-2 text-lg font-semibold">
               <dt>Итого</dt>
               <dd>{formatRub(quote.data.total_price)}</dd>
@@ -309,19 +299,27 @@ export function BookingForm({ item }: { item: Equipment }) {
       ) : (
         <>
           <Field id="booking-phone" label="Телефон для подтверждения" error={phoneError ?? undefined} hint="Владелец позвонит, чтобы подтвердить бронь">
-            <Input
+            <PhoneInput
               id="booking-phone"
-              type="tel"
-              autoComplete="tel"
-              placeholder="+7 900 123-45-67"
               value={phoneValue}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={setPhone}
               aria-invalid={Boolean(phoneError)}
               aria-describedby={phoneError ? 'booking-phone-error' : 'booking-phone-hint'}
             />
           </Field>
-          <Field id="booking-address" label="Адрес объекта (необязательно)" hint="Если нужна доставка. Её стоимость обсудите по телефону">
-            <Input id="booking-address" value={address} onChange={(e) => setAddress(e.target.value)} maxLength={500} />
+          <Field id="booking-address" label="Адрес объекта (необязательно)" error={addressError ?? undefined} hint="Если нужна доставка. Её стоимость обсудите по телефону">
+            <AddressInput
+              id="booking-address"
+              value={address}
+              onChange={(v) => {
+                setAddress(v)
+                setAddressText(v === null)
+                setAddressError(null)
+              }}
+              placeholder="Куда привезти технику"
+              invalid={Boolean(addressError)}
+              describedBy={addressError ? 'booking-address-error' : 'booking-address-hint'}
+            />
           </Field>
           <Field id="booking-comment" label="Комментарий (необязательно)">
             <textarea

@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.api.deps import OptionalUser, OwnerUser, SessionDep
+from app.api.routes.geo import ensure_normalized
 from app.core.config import settings
 from app.models import (
     Booking,
@@ -32,6 +33,7 @@ from app.schemas.equipment import (
     SortOption,
 )
 from app.services.media import delete_equipment_photo_file, save_equipment_photo
+from app.services.ratings import owner_rating, ratings_subquery
 
 router = APIRouter(tags=["catalog"])
 
@@ -53,16 +55,22 @@ def distance_km(lat: float, lon: float) -> ColumnElement[float]:
     return 6371 * func.acos(func.least(1.0, func.greatest(-1.0, cos_angle)))
 
 
-def to_list_item(eq: Equipment, distance: float | None = None) -> EquipmentListItem:
+def to_list_item(
+    eq: Equipment, distance: float | None = None, rating: float | None = None, reviews_count: int | None = None
+) -> EquipmentListItem:
     item = EquipmentListItem.model_validate(eq)
     item.cover_url = eq.photos[0].url if eq.photos else None
     item.distance_km = round(distance, 1) if distance is not None else None
+    item.owner_rating = round(float(rating), 1) if rating is not None else None
+    item.owner_reviews_count = reviews_count or 0
     return item
 
 
-def to_read(eq: Equipment) -> EquipmentRead:
+async def to_read(session: AsyncSession, eq: Equipment) -> EquipmentRead:
     item = EquipmentRead.model_validate(eq)
     item.cover_url = eq.photos[0].url if eq.photos else None
+    item.owner.rating, item.owner.reviews_count = await owner_rating(session, eq.owner_id)
+    item.owner_rating, item.owner_reviews_count = item.owner.rating, item.owner.reviews_count
     return item
 
 
@@ -104,7 +112,6 @@ class EquipmentFilters(BaseModel):
     category: str | None = Field(default=None, description="slug категории")
     q: str | None = Field(default=None, max_length=100, description="Поиск по названию")
     price_max: Decimal | None = Field(default=None, gt=0, description="Максимальная цена за час")
-    operator: bool | None = Field(default=None, description="Только с оператором")
     lat: float | None = Field(default=None, ge=-90, le=90)
     lon: float | None = Field(default=None, ge=-180, le=180)
     radius_km: float | None = Field(default=None, gt=0, le=500)
@@ -147,8 +154,6 @@ async def list_equipment(session: SessionDep, filters: Annotated[EquipmentFilter
         conditions.append(Equipment.name.icontains(f.q.strip(), autoescape=True))
     if f.price_max is not None:
         conditions.append(Equipment.price_per_hour <= f.price_max)
-    if f.operator:
-        conditions.append(Equipment.operator_available.is_(True))
 
     dist = distance_km(f.lat, f.lon) if f.lat is not None and f.lon is not None else None
     if dist is not None and f.radius_km is not None:
@@ -175,8 +180,15 @@ async def list_equipment(session: SessionDep, filters: Annotated[EquipmentFilter
         "distance": [dist.asc()] if dist is not None else [],
     }[f.sort]
 
+    ratings = ratings_subquery()
     stmt = (
-        select(Equipment, dist.label("distance") if dist is not None else literal(None))
+        select(
+            Equipment,
+            dist.label("distance") if dist is not None else literal(None),
+            ratings.c.rating,
+            ratings.c.reviews_count,
+        )
+        .outerjoin(ratings, ratings.c.subject_id == Equipment.owner_id)
         .where(*conditions)
         .options(selectinload(Equipment.category), selectinload(Equipment.photos))
         .order_by(*order_by, Equipment.id)
@@ -184,7 +196,7 @@ async def list_equipment(session: SessionDep, filters: Annotated[EquipmentFilter
         .offset(f.offset)
     )
     rows = (await session.execute(stmt)).all()
-    return EquipmentPage(items=[to_list_item(eq, d) for eq, d in rows], total=total)
+    return EquipmentPage(items=[to_list_item(eq, d, r, c) for eq, d, r, c in rows], total=total)
 
 
 @router.get("/equipment/{equipment_id}", response_model=EquipmentRead)
@@ -193,7 +205,7 @@ async def get_equipment(equipment_id: int, session: SessionDep, user: OptionalUs
     # Снятую с размещения технику видят только владелец и админ
     if eq is None or (eq.status != EquipmentStatus.available and not can_manage(user, eq)):
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Техника не найдена")
-    return to_read(eq)
+    return await to_read(session, eq)
 
 
 # ---------- кабинет владельца ----------
@@ -213,12 +225,13 @@ async def list_my_equipment(session: SessionDep, user: OwnerUser) -> list[Equipm
 @router.post("/equipment", response_model=EquipmentRead, status_code=status.HTTP_201_CREATED)
 async def create_equipment(data: EquipmentCreate, session: SessionDep, user: OwnerUser) -> EquipmentRead:
     await ensure_category_exists(session, data.category_id)
-    eq = Equipment(**data.model_dump(), owner_id=user.id)
+    ensure_normalized(data.address, data.address_token)
+    eq = Equipment(**data.model_dump(exclude={"address_token"}), owner_id=user.id)
     session.add(eq)
     await session.commit()
     created = await load_equipment(session, eq.id)
     assert created is not None
-    return to_read(created)
+    return await to_read(session, created)
 
 
 @router.patch("/equipment/{equipment_id}", response_model=EquipmentRead)
@@ -227,6 +240,9 @@ async def update_equipment(
 ) -> EquipmentRead:
     eq = await get_managed_equipment(session, equipment_id, user)
     changes = data.model_dump(exclude_unset=True)
+    token = changes.pop("address_token", None)
+    if "address" in changes:
+        ensure_normalized(changes["address"], token)
 
     if changes.get("category_id") is not None:
         await ensure_category_exists(session, changes["category_id"])
@@ -238,8 +254,8 @@ async def update_equipment(
         "longitude",
         "price_per_hour",
         "min_hours",
-        "operator_available",
         "status",
+        "address",
         "specs",
     ):
         if field in changes and changes[field] is None:
@@ -247,13 +263,11 @@ async def update_equipment(
 
     for field, value in changes.items():
         setattr(eq, field, value)
-    if eq.operator_available and eq.operator_price_per_hour is None:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail="Укажите цену оператора за час")
 
     await session.commit()
     updated = await load_equipment(session, eq.id)
     assert updated is not None
-    return to_read(updated)
+    return await to_read(session, updated)
 
 
 @router.delete("/equipment/{equipment_id}", status_code=status.HTTP_204_NO_CONTENT)

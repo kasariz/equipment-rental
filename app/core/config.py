@@ -39,6 +39,10 @@ class Settings(BaseSettings):
     telegram_api_base: str = "https://api.telegram.org"  # в тестах подменяется на фейковый сервер
     # В этом часовом поясе время пишется в уведомлениях
     timezone: str = "Europe/Moscow"
+    # Ключ «API Геокодера» Яндекса: подсказки адресов. Без него адрес вводится свободным текстом
+    yandex_geocoder_api_key: str = ""
+    yandex_geocoder_url: str = "https://geocode-maps.yandex.ru/v1/"
+
     # Адрес сайта для кнопок в сообщениях. Telegram не принимает ссылки на localhost,
     # поэтому с локальным адресом кнопки просто не добавляются
     site_url: str = "http://localhost:5173"

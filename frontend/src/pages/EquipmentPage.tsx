@@ -5,7 +5,9 @@ import type { Equipment } from '@/api/client'
 import { BookingForm } from '@/components/booking/BookingForm'
 import { EquipmentImage } from '@/components/EquipmentImage'
 import { PointMap } from '@/components/map/PointMap'
+import { OwnerReviews } from '@/components/OwnerReviews'
 import { PageSpinner } from '@/components/PageSpinner'
+import { Stars } from '@/components/Stars'
 import { Button } from '@/components/ui/button'
 import { HorizontalScroller } from '@/components/ui/horizontal-scroller'
 import { useMe } from '@/features/auth/api'
@@ -50,9 +52,7 @@ function Gallery({ item }: { item: Equipment }) {
 function PricePanel({ item, isOwner }: { item: Equipment; isOwner: boolean }) {
   const rows: [string, string][] = [
     ['Минимальный заказ', `${item.min_hours} ч`],
-    ['Оператор', item.operator_available && item.operator_price_per_hour != null
-      ? `+${formatRub(item.operator_price_per_hour)} в час`
-      : 'Не предоставляется'],
+    ['Оператор', 'Включён в цену'],
   ]
   if (item.price_per_shift != null) rows.unshift(['Смена, 8 часов', formatRub(item.price_per_shift)])
 
@@ -85,8 +85,14 @@ function PricePanel({ item, isOwner }: { item: Equipment; isOwner: boolean }) {
         </div>
       ) : null}
 
-      <p className="mt-6 text-sm text-steel">
+      <p className="mt-6 flex flex-wrap items-center gap-x-2 text-sm text-steel">
         Владелец: <span className="text-ink">{item.owner.full_name}</span>
+        {item.owner.rating != null && (
+          <a href="#reviews" className="inline-flex items-center gap-1 rounded-sm text-ink hover:underline">
+            <Stars value={item.owner.rating} className="[&_svg]:size-3.5" />
+            {item.owner.rating.toLocaleString('ru-RU')} ({item.owner.reviews_count})
+          </a>
+        )}
       </p>
     </div>
   )
@@ -153,6 +159,10 @@ export function EquipmentPage() {
               <p className="mt-4 max-w-prose whitespace-pre-line">{item.description}</p>
             </section>
           )}
+
+          <div id="reviews" className="scroll-mt-6">
+            <OwnerReviews ownerId={item.owner.id} ownerName={item.owner.full_name} />
+          </div>
 
           <section>
             <h2 className="font-display text-xl font-semibold">Где стоит техника</h2>

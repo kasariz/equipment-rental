@@ -8,24 +8,27 @@ from tests.conftest import ClientFactory, at, booking_body, create_equipment
 
 async def test_only_owners_can_add_equipment(equipment: dict, renter: httpx.AsyncClient, anon: httpx.AsyncClient):
     assert equipment["owner"]["full_name"] == "Пётр Владелец"
-    body = {"name": "X", "category_id": 1, "latitude": 47, "longitude": 39, "price_per_hour": 1}
+    body = {"name": "X", "category_id": 1, "address": "Где-то", "latitude": 47, "longitude": 39, "price_per_hour": 1}
     assert (await renter.post("/api/equipment", json=body)).status_code == 403
     assert (await anon.post("/api/equipment", json=body)).status_code == 401
 
 
-async def test_operator_price_required_when_operator_offered(owner: httpx.AsyncClient):
+async def test_categories_have_spec_templates(anon: httpx.AsyncClient):
+    categories = {c["slug"]: c for c in (await anon.get("/api/categories")).json()}
+    assert len(categories) >= 16
+    template = {i["name"]: i["example"] for i in categories["excavator-loaders"]["spec_template"]}
+    assert template["Глубина копания"] == "5,9 м"
+    assert all(5 <= len(c["spec_template"]) <= 10 for c in categories.values())
+    # У каждой характеристики есть пример значения в своих единицах
+    assert all(i["example"] for c in categories.values() for i in c["spec_template"])
+    dump = {i["name"]: i["example"] for i in categories["dump-trucks"]["spec_template"]}
+    assert dump["Грузоподъёмность"] == "20 т" and dump["Колёсная формула"] == "6×4"
+
+
+async def test_address_is_required(owner: httpx.AsyncClient):
     categories = (await owner.get("/api/categories")).json()
-    body = {
-        "name": "Кран",
-        "category_id": categories[0]["id"],
-        "latitude": 47,
-        "longitude": 39,
-        "price_per_hour": 3000,
-        "operator_available": True,
-    }
-    r = await owner.post("/api/equipment", json=body)
-    assert r.status_code == 422
-    assert "цену оператора" in r.text
+    body = {"name": "Кран", "category_id": categories[0]["id"], "latitude": 47, "longitude": 39, "price_per_hour": 3000}
+    assert (await owner.post("/api/equipment", json=body)).status_code == 422
 
 
 async def test_specs_keep_their_order(owner: httpx.AsyncClient):

@@ -33,12 +33,16 @@ export function EquipmentCard({ item, active, onHover, ref }: Props) {
         <div className="mt-auto flex flex-wrap items-baseline gap-x-3 pt-2">
           <span className="text-lg font-semibold">
             {formatRub(item.price_per_hour)}
-            <span className="text-sm font-normal text-steel"> / час</span>
+            <span className="text-sm font-normal text-steel"> / час с оператором</span>
           </span>
           {item.distance_km != null && (
             <span className="text-sm text-steel">{formatDistance(item.distance_km)} от вас</span>
           )}
-          {item.operator_available && <span className="text-sm text-steel">есть оператор</span>}
+          {item.owner_rating != null && (
+            <span className="text-sm text-steel" aria-label={`Рейтинг владельца ${item.owner_rating} из 5`}>
+              <span className="text-signal-dark">★</span> {item.owner_rating.toLocaleString('ru-RU')}
+            </span>
+          )}
         </div>
       </div>
     </Link>

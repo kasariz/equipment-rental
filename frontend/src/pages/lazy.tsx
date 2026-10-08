@@ -16,3 +16,4 @@ export const MyBookingsPage = lazy(() => import('@/pages/MyBookingsPage').then((
 export const RequestsPage = lazy(() =>
   import('@/pages/owner/RequestsPage').then((m) => ({ default: m.RequestsPage })),
 )
+export const AdminPage = lazy(() => import('@/pages/admin/AdminPage').then((m) => ({ default: m.AdminPage })))

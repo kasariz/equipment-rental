@@ -2,10 +2,9 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from app.core.phone import Phone
 from app.models import BookingStatus, RateType
 from app.schemas.equipment import Amount
-
-PHONE_PATTERN = r"^\+?[\d\s()\-]{10,20}$"
 
 
 class BookingParams(BaseModel):
@@ -13,7 +12,6 @@ class BookingParams(BaseModel):
     rate_type: RateType
     start: datetime = Field(description="Начало первой смены или часа, с часовым поясом")
     quantity: int = Field(ge=1, le=30, description="Часы или смены")
-    with_operator: bool = False
 
     @field_validator("start")
     @classmethod
@@ -28,8 +26,9 @@ class BookingParams(BaseModel):
 class BookingCreate(BookingParams):
     model_config = ConfigDict(str_strip_whitespace=True)
 
-    contact_phone: str = Field(pattern=PHONE_PATTERN, description="По нему позвонит владелец")
+    contact_phone: Phone = Field(description="По нему позвонит владелец")
     delivery_address: str | None = Field(default=None, max_length=500)
+    delivery_address_token: str | None = Field(default=None, description="Подпись адреса из /api/geo/search")
     comment: str | None = Field(default=None, max_length=1000)
 
 
@@ -37,8 +36,6 @@ class QuoteRead(BaseModel):
     start: datetime
     end: datetime
     billable_hours: int
-    rental_price: Amount
-    operator_price: Amount
     total_price: Amount
     available: bool
 
@@ -61,8 +58,12 @@ class BookingEquipment(BaseModel):
 
 
 class Contact(BaseModel):
+    id: int | None = None
     full_name: str
     phone: str | None
+    # Для владельца: рейтинг арендатора по отзывам других владельцев
+    rating: float | None = None
+    reviews_count: int = 0
 
 
 class BookingRead(BaseModel):
@@ -72,15 +73,14 @@ class BookingRead(BaseModel):
     quantity: int
     start: datetime
     end: datetime
-    with_operator: bool
     delivery_address: str | None
     comment: str | None
     contact_phone: str
     reject_reason: str | None
-    rental_price: Amount
-    operator_price: Amount
     total_price: Amount
     created_at: datetime
+    reviewed: bool = Field(default=False, description="Клиент уже оставил отзыв о владельце")
+    renter_reviewed: bool = Field(default=False, description="Владелец уже оставил отзыв об арендаторе")
     equipment: BookingEquipment
     client: Contact | None = Field(default=None, description="Для владельца: кто арендует")
     owner: Contact | None = Field(default=None, description="Для клиента: контакт владельца после подтверждения")

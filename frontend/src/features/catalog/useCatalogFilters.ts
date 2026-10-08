@@ -6,7 +6,6 @@ export type CatalogFilters = {
   category: string
   q: string
   priceMax: string
-  operator: boolean
   from: string // значение input datetime-local, без часового пояса
   to: string
   lat: string
@@ -30,7 +29,6 @@ export function useCatalogFilters() {
       category: params.get('category') ?? '',
       q: params.get('q') ?? '',
       priceMax: params.get('price_max') ?? '',
-      operator: params.get('operator') === '1',
       from: params.get('from') ?? '',
       to: params.get('to') ?? '',
       lat: params.get('lat') ?? '',
@@ -46,11 +44,11 @@ export function useCatalogFilters() {
         (prev) => {
           const next = new URLSearchParams(prev)
           const map: Record<keyof CatalogFilters, string> = {
-            category: 'category', q: 'q', priceMax: 'price_max', operator: 'operator',
+            category: 'category', q: 'q', priceMax: 'price_max',
             from: 'from', to: 'to', lat: 'lat', lon: 'lon', radius: 'radius', sort: 'sort',
           }
           for (const [key, value] of Object.entries(patch) as [keyof CatalogFilters, unknown][]) {
-            const str = typeof value === 'boolean' ? (value ? '1' : '') : String(value ?? '')
+            const str = String(value ?? '')
             if (str && !(key === 'sort' && str === 'new')) next.set(map[key], str)
             else next.delete(map[key])
           }
@@ -71,7 +69,6 @@ export function useCatalogFilters() {
     if (filters.q.trim()) q.q = filters.q.trim()
     const price = Number(filters.priceMax)
     if (filters.priceMax && price > 0) q.price_max = price
-    if (filters.operator) q.operator = true
     const hasPoint = filters.lat && filters.lon
     if (hasPoint) {
       q.lat = Number(filters.lat)
@@ -93,7 +90,7 @@ export function useCatalogFilters() {
 
   const activeCount =
     [filters.category, filters.q, filters.priceMax, filters.from && filters.to, filters.lat].filter(Boolean)
-      .length + (filters.operator ? 1 : 0)
+      .length
 
   return { filters, update, reset, query, activeCount }
 }

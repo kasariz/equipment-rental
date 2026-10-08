@@ -48,3 +48,4 @@ def require_role(*roles: UserRole):
 
 
 OwnerUser = Annotated[User, Depends(require_role(UserRole.owner, UserRole.admin))]
+AdminUser = Annotated[User, Depends(require_role(UserRole.admin))]

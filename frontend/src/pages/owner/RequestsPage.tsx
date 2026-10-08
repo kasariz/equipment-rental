@@ -1,15 +1,18 @@
-import { Phone } from 'lucide-react'
+import { Phone, Star } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { toast } from 'sonner'
 import type { Booking, BookingStatus } from '@/api/client'
 import { RejectDialog } from '@/components/booking/RejectDialog'
+import { RenterRating } from '@/components/RenterRating'
+import { ReviewDialog } from '@/components/ReviewDialog'
 import { PageSpinner } from '@/components/PageSpinner'
 import { Button } from '@/components/ui/button'
 import { useOwnerAction, useOwnerBookings, useRejectBooking } from '@/features/bookings/api'
 import { useTelegramStatus } from '@/features/telegram/api'
 import { formatPeriod } from '@/lib/dates'
 import { bookingStatusForOwner, bookingStatusStyle, describeRate, formatRub, telHref } from '@/lib/format'
+import { formatPhone } from '@/lib/phone'
 import { cn } from '@/lib/utils'
 
 const TABS: { key: string; label: string; statuses: BookingStatus[]; empty: string }[] = [
@@ -47,13 +50,16 @@ function RequestCard({ b }: { b: Booking }) {
         </Link>
         <p className="text-[15px]">
           {formatPeriod(b.start, b.end)}
-          <span className="text-steel">, {describeRate(b.rate_type, b.quantity)}{b.with_operator ? ', с оператором' : ', без оператора'}</span>
+          <span className="text-steel">, {describeRate(b.rate_type, b.quantity)}</span>
         </p>
         <p className="font-semibold">{formatRub(b.total_price)}</p>
 
         <dl className="mt-1 grid gap-x-4 gap-y-1 text-sm sm:grid-cols-[auto_minmax(0,1fr)]">
           <dt className="text-steel">Клиент</dt>
-          <dd>{b.client?.full_name}</dd>
+          <dd className="flex flex-wrap items-center gap-x-2">
+            {b.client?.full_name}
+            {b.client && <RenterRating client={b.client} />}
+          </dd>
           {b.delivery_address && (
             <>
               <dt className="text-steel">Адрес объекта</dt>
@@ -82,7 +88,7 @@ function RequestCard({ b }: { b: Booking }) {
           <Button asChild variant={b.status === 'pending' ? 'primary' : 'outline'}>
             <a href={telHref(b.contact_phone)}>
               <Phone />
-              {b.contact_phone}
+              {formatPhone(b.contact_phone)}
             </a>
           </Button>
         )}
@@ -112,6 +118,22 @@ function RequestCard({ b }: { b: Booking }) {
             />
           </>
         )}
+        {(b.status === 'completed' || b.status === 'cancelled') &&
+          (b.renter_reviewed ? (
+            <p className="text-sm text-steel">Вы оценили арендатора</p>
+          ) : (
+            <ReviewDialog
+              bookingId={b.id}
+              subjectName={b.client?.full_name ?? 'арендатора'}
+              target="renter"
+              trigger={
+                <Button variant="outline">
+                  <Star />
+                  Оценить арендатора
+                </Button>
+              }
+            />
+          ))}
         {b.status === 'active' && (
           <Button variant="dark" disabled={busy} onClick={() => run('complete', 'Аренда завершена')}>
             Завершить аренду

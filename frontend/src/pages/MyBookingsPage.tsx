@@ -1,8 +1,9 @@
-import { Phone } from 'lucide-react'
+import { Phone, Star } from 'lucide-react'
 import { Link } from 'react-router'
 import { toast } from 'sonner'
 import type { Booking } from '@/api/client'
 import { EquipmentImage } from '@/components/EquipmentImage'
+import { ReviewDialog } from '@/components/ReviewDialog'
 import { PageSpinner } from '@/components/PageSpinner'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
@@ -10,6 +11,7 @@ import { useCancelBooking, useMyBookings } from '@/features/bookings/api'
 import { useNow } from '@/hooks/useNow'
 import { formatPeriod } from '@/lib/dates'
 import { bookingStatusForClient, bookingStatusStyle, describeRate, formatRub, telHref } from '@/lib/format'
+import { formatPhone } from '@/lib/phone'
 import { cn } from '@/lib/utils'
 
 const CURRENT = ['pending', 'confirmed', 'active'] as const
@@ -30,12 +32,12 @@ function BookingCard({ b, now }: { b: Booking; now: number }) {
         </Link>
         <p className="text-[15px]">
           {formatPeriod(b.start, b.end)}
-          <span className="text-steel">, {describeRate(b.rate_type, b.quantity)}{b.with_operator ? ', с оператором' : ''}</span>
+          <span className="text-steel">, {describeRate(b.rate_type, b.quantity)}</span>
         </p>
         <p className="font-semibold">{formatRub(b.total_price)}</p>
 
         {b.status === 'pending' && (
-          <p className="text-sm text-steel">Владелец позвонит по номеру {b.contact_phone}, чтобы подтвердить бронь.</p>
+          <p className="text-sm text-steel">Владелец позвонит по номеру {formatPhone(b.contact_phone)}, чтобы подтвердить бронь.</p>
         )}
         {b.status === 'rejected' && b.reject_reason && <p className="text-sm text-steel">Причина: {b.reject_reason}</p>}
         {b.owner && (
@@ -44,11 +46,29 @@ function BookingCard({ b, now }: { b: Booking; now: number }) {
             {b.owner.phone && (
               <a href={telHref(b.owner.phone)} className="inline-flex items-center gap-1 font-medium underline underline-offset-4 hover:decoration-signal">
                 <Phone className="size-3.5" aria-hidden />
-                {b.owner.phone}
+                {formatPhone(b.owner.phone)}
               </a>
             )}
           </p>
         )}
+
+        {/* Владельца можно оценить после аренды или если он отклонил заявку / отменил бронь */}
+        {(b.status === 'completed' || b.status === 'rejected') &&
+          (b.reviewed ? (
+            <p className="text-sm text-steel">Вы оставили отзыв. Спасибо!</p>
+          ) : (
+            <ReviewDialog
+              bookingId={b.id}
+              subjectName={b.owner?.full_name ?? 'владельца'}
+              target="owner"
+              trigger={
+                <Button variant="outline" size="sm" className="mt-1 self-start">
+                  <Star />
+                  Оценить владельца
+                </Button>
+              }
+            />
+          ))}
 
         {canCancel && (
           <ConfirmDialog

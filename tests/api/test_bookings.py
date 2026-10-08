@@ -9,9 +9,9 @@ from tests.conftest import ClientFactory, at, booking_body
 
 
 async def test_quote(anon: httpx.AsyncClient, equipment: dict):
-    body = booking_body(equipment["id"], at(3, 9), quantity=5, with_operator=True)
+    body = booking_body(equipment["id"], at(3, 9), quantity=5)
     q = (await anon.post("/api/bookings/quote", json=body)).json()
-    assert (q["rental_price"], q["operator_price"], q["total_price"]) == (12500, 3000, 15500)
+    assert q["total_price"] == 5 * 2500  # цена уже с оператором
     assert q["available"] is True
 
 
@@ -53,8 +53,8 @@ async def test_lead_time_and_own_equipment(owner: httpx.AsyncClient, renter: htt
 
 
 async def test_phone_is_saved_to_profile(renter: httpx.AsyncClient, equipment: dict):
-    await renter.post("/api/bookings", json=booking_body(equipment["id"], at(3, 9), contact_phone="+7 999 000-11-22"))
-    assert (await renter.get("/api/auth/me")).json()["phone"] == "+7 999 000-11-22"
+    await renter.post("/api/bookings", json=booking_body(equipment["id"], at(3, 9), contact_phone="8 (999) 000-11-22"))
+    assert (await renter.get("/api/auth/me")).json()["phone"] == "+79990001122"
 
 
 async def test_lifecycle(owner: httpx.AsyncClient, renter: httpx.AsyncClient, equipment: dict):
@@ -64,7 +64,8 @@ async def test_lifecycle(owner: httpx.AsyncClient, renter: httpx.AsyncClient, eq
     assert mine["status"] == "pending" and mine["owner"] is None  # телефон владельца до подтверждения не видно
 
     incoming = (await owner.get("/api/owner/bookings", params={"status": "pending"})).json()
-    assert incoming[0]["client"] == {"full_name": "Анна Клиентова", "phone": "+7 900 111-22-33"}
+    client = incoming[0]["client"]
+    assert (client["full_name"], client["phone"], client["rating"]) == ("Анна Клиентова", "+79001112233", None)
 
     assert (await renter.post(f"/api/bookings/{bid}/confirm")).status_code == 403  # клиент сам себе не подтвердит
     assert (await owner.post(f"/api/bookings/{bid}/start")).status_code == 409  # нельзя начать до подтверждения

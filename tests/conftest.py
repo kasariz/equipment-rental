@@ -111,11 +111,10 @@ async def create_equipment(owner: httpx.AsyncClient, **overrides) -> dict:
         "category_id": categories[0]["id"],
         "latitude": 47.2357,
         "longitude": 39.7015,
+        "address": "Ростов-на-Дону, Большая Садовая улица, 1",
         "price_per_hour": 2500,
         "price_per_shift": 18000,
         "min_hours": 4,
-        "operator_available": True,
-        "operator_price_per_hour": 600,
         "specs": [{"name": "Масса", "value": "8 т"}],
     } | overrides
     r = await owner.post("/api/equipment", json=body)
@@ -140,6 +139,5 @@ def booking_body(equipment_id: int, start: str, **overrides) -> dict:
         "rate_type": "hourly",
         "start": start,
         "quantity": 4,
-        "with_operator": False,
-        "contact_phone": "+7 900 111-22-33",
+        "contact_phone": "8 900 111-22-33",
     } | overrides

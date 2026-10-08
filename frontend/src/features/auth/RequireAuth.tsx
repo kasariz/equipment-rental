@@ -18,9 +18,13 @@ export function RequireAuth({ children, roles }: { children: ReactNode; roles?: 
   if (roles && !roles.includes(user.role)) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
-        <h1 className="font-display text-3xl font-semibold">Раздел для владельцев техники</h1>
+        <h1 className="font-display text-3xl font-semibold">
+          {roles.includes('owner') ? 'Раздел для владельцев техники' : 'Раздел для администраторов'}
+        </h1>
         <p className="mt-3 max-w-prose text-steel">
-          Чтобы сдавать технику, нужен аккаунт владельца. Зарегистрируйте его на другой email.
+          {roles.includes('owner')
+            ? 'Чтобы сдавать технику, нужен аккаунт владельца. Зарегистрируйте его на другой email.'
+            : 'У вашего аккаунта нет доступа к этому разделу.'}
         </p>
       </div>
     )

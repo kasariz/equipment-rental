@@ -90,7 +90,7 @@ function MoreFilters({
     <div className="grid gap-4 rounded-lg border border-line bg-paper p-4">
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="flex flex-col gap-1.5 text-sm font-medium">
-          Цена за час, до
+          Цена за час с оператором, до
           <Input
             type="number"
             inputMode="numeric"
@@ -101,15 +101,6 @@ function MoreFilters({
             onChange={(e) => update({ priceMax: e.target.value })}
             className="h-10"
           />
-        </label>
-        <label className="flex items-center gap-2.5 self-end pb-2.5 text-[15px]">
-          <input
-            type="checkbox"
-            checked={filters.operator}
-            onChange={(e) => update({ operator: e.target.checked })}
-            className="size-4 accent-ink"
-          />
-          Нужен оператор
         </label>
       </div>
       <fieldset className="grid gap-3 sm:grid-cols-2">
@@ -196,7 +187,7 @@ export function CatalogPage() {
   const { data, isPending, isError, isFetching, refetch } = useEquipmentList(query)
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [hoveredId, setHoveredId] = useState<number | null>(null)
-  const [showMore, setShowMore] = useState(Boolean(filters.priceMax || filters.operator || filters.from))
+  const [showMore, setShowMore] = useState(Boolean(filters.priceMax || filters.from))
   const [mobileView, setMobileView] = useState<'list' | 'map'>('list')
   const cardRefs = useRef(new Map<number, HTMLAnchorElement>())
 
