@@ -14,8 +14,8 @@ class UserCreate(BaseModel):
     phone: Phone | None = None
     # Админа через регистрацию создать нельзя
     role: Literal[UserRole.client, UserRole.owner] = UserRole.client
-    # 152-ФЗ: без согласия на обработку персональных данных регистрировать нельзя
-    consent: Literal[True] = Field(description="Согласие на обработку персональных данных")
+    # 152-ФЗ: согласие на обработку персональных данных. Обязательно, если включено в настройках
+    consent: bool = Field(default=False, description="Согласие на обработку персональных данных")
 
     @field_validator("email")
     @classmethod

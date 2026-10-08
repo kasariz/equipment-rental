@@ -47,13 +47,17 @@ def set_auth_cookie(response: Response, user: User) -> None:
 @router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
 async def register(data: UserCreate, session: SessionDep, response: Response, request: Request) -> User:
     limiter.hit(f"register:{client_ip(request)}", limit=5, window_seconds=3600)
+    if settings.privacy_consent_required and not data.consent:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT, detail="Нужно согласие на обработку персональных данных"
+        )
     user = User(
         email=data.email,
         hashed_password=hash_password(data.password),
         full_name=data.full_name,
         phone=data.phone,
         role=data.role,
-        consent_at=datetime.now(UTC),
+        consent_at=datetime.now(UTC) if data.consent else None,
     )
     session.add(user)
     try:

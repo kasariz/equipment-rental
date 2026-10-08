@@ -18,6 +18,7 @@ class SiteInfo(BaseModel):
     operator_name: str
     operator_email: str
     password_reset_by_email: bool
+    privacy_consent_required: bool
 
 
 @router.get("/site-info", response_model=SiteInfo)
@@ -29,4 +30,5 @@ async def site_info() -> SiteInfo:
         operator_name=settings.operator_name,
         operator_email=settings.operator_email,
         password_reset_by_email=mailer.enabled(),
+        privacy_consent_required=settings.privacy_consent_required,
     )

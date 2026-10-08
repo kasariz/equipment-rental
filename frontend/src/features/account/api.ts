@@ -6,7 +6,7 @@ export function useSiteInfo() {
     queryKey: ['site-info'],
     queryFn: async () => {
       const { data } = await api.GET('/api/site-info')
-      return data ?? { operator_name: '', operator_email: '', password_reset_by_email: false }
+      return data ?? { operator_name: '', operator_email: '', password_reset_by_email: false, privacy_consent_required: false }
     },
     staleTime: Infinity,
   })

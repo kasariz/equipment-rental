@@ -20,7 +20,14 @@ def rate_limits(monkeypatch: pytest.MonkeyPatch):
 # ---------- 152-ФЗ и аккаунт ----------
 
 
-async def test_registration_requires_consent(anon: httpx.AsyncClient):
+async def test_consent_not_required_by_default(anon: httpx.AsyncClient):
+    body = {"email": "a@test.ru", "password": PASSWORD, "full_name": "Анна"}
+    assert (await anon.post("/api/auth/register", json=body)).status_code == 201
+
+
+async def test_registration_requires_consent_when_enabled(anon: httpx.AsyncClient, monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(settings, "privacy_consent_required", True)
+    assert (await anon.get("/api/site-info")).json()["privacy_consent_required"] is True
     body = {"email": "a@test.ru", "password": PASSWORD, "full_name": "Анна"}
     assert (await anon.post("/api/auth/register", json=body)).status_code == 422
     assert (await anon.post("/api/auth/register", json=body | {"consent": False})).status_code == 422

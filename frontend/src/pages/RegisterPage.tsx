@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/ui/password-input'
 import { PhoneInput } from '@/components/ui/phone-input'
 import { isCompletePhone } from '@/lib/phone'
+import { useSiteInfo } from '@/features/account/api'
 import { useMe, useRegister } from '@/features/auth/api'
 import { cn } from '@/lib/utils'
 import { AuthShell } from './AuthShell'
@@ -20,7 +21,7 @@ const schema = z.object({
   email: z.email('Введите email в формате name@example.ru'),
   phone: z.string().refine((v) => v === '' || isCompletePhone(v), 'Введите номер полностью: +7 и 10 цифр'),
   password: z.string().min(8, 'Пароль должен быть не короче 8 символов').max(128),
-  consent: z.boolean().refine((v) => v, 'Без согласия зарегистрироваться нельзя'),
+  consent: z.boolean(),
 })
 type FormValues = z.infer<typeof schema>
 
@@ -41,11 +42,13 @@ const roles = [
 
 export function RegisterPage() {
   const { data: user } = useMe()
+  const { data: site } = useSiteInfo()
+  const consentRequired = site?.privacy_consent_required ?? false
   const registerUser = useRegister()
   const navigate = useNavigate()
   const [params] = useSearchParams()
 
-  const { register, handleSubmit, control, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit, control, setError, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       role: params.get('role') === 'owner' ? 'owner' : 'client',
@@ -63,9 +66,14 @@ export function RegisterPage() {
     return <Navigate to={isOwner ? '/my/equipment' : '/profile'} replace />
   }
 
-  const onSubmit = ({ phone, consent, ...values }: FormValues) =>
+  const onSubmit = ({ phone, consent, ...values }: FormValues) => {
+    // Согласие обязательно, только если это включено на сервере (PRIVACY_CONSENT_REQUIRED)
+    if (consentRequired && !consent) {
+      setError('consent', { message: 'Без согласия зарегистрироваться нельзя' })
+      return
+    }
     registerUser.mutate(
-      { ...values, phone: phone || null, consent: consent as true },
+      { ...values, phone: phone || null, consent },
       {
         onSuccess: () => {
           toast.success('Аккаунт создан')
@@ -73,6 +81,7 @@ export function RegisterPage() {
         },
       },
     )
+  }
 
   return (
     <AuthShell title="Регистрация">
@@ -156,6 +165,7 @@ export function RegisterPage() {
           />
         </Field>
 
+        {consentRequired && (
         <div className="flex flex-col gap-1.5">
           <label className="flex items-start gap-2.5 text-sm">
             <input
@@ -178,6 +188,7 @@ export function RegisterPage() {
             </p>
           )}
         </div>
+        )}
 
         <Button type="submit" size="lg" className="mt-2" disabled={registerUser.isPending}>
           {registerUser.isPending ? 'Создаём аккаунт…' : 'Создать аккаунт'}

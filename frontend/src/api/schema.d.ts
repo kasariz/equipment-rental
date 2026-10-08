@@ -1556,6 +1556,8 @@ export interface components {
             operator_email: string;
             /** Password Reset By Email */
             password_reset_by_email: boolean;
+            /** Privacy Consent Required */
+            privacy_consent_required: boolean;
         };
         /**
          * SpecItem
@@ -1611,9 +1613,9 @@ export interface components {
             /**
              * Consent
              * @description Согласие на обработку персональных данных
-             * @constant
+             * @default false
              */
-            consent: true;
+            consent: boolean;
         };
         /** UserLogin */
         UserLogin: {

@@ -2,6 +2,7 @@ import { LogOut, UserRound } from 'lucide-react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { useSiteInfo } from '@/features/account/api'
 import { useLogout, useMe } from '@/features/auth/api'
 import { useOwnerBookings } from '@/features/bookings/api'
 import { cn } from '@/lib/utils'
@@ -113,6 +114,7 @@ function NavLinks({ className }: { className?: string }) {
 export function Layout() {
   // В каталоге карта занимает весь экран, футер под ней не нужен
   const hideFooter = useLocation().pathname === '/catalog'
+  const { data: site } = useSiteInfo()
   return (
     <div className="flex min-h-svh flex-col">
       <div className="hazard-stripe h-1.5" aria-hidden />
@@ -135,9 +137,11 @@ export function Layout() {
       <footer className={cn('border-t border-line', hideFooter && 'hidden')}>
         <div className="mx-auto max-w-6xl px-4 py-6 text-sm text-steel sm:px-6">
           Ковш — аренда спецтехники у владельцев рядом с вашим объектом
-          <Link to="/privacy" className="ml-4 underline underline-offset-4 hover:text-ink">
-            Политика конфиденциальности
-          </Link>
+          {site?.privacy_consent_required && (
+            <Link to="/privacy" className="ml-4 underline underline-offset-4 hover:text-ink">
+              Политика конфиденциальности
+            </Link>
+          )}
         </div>
       </footer>
     </div>
