@@ -15,6 +15,7 @@ import {
   MyBookingsPage,
   MyEquipmentPage,
   RequestsPage,
+  StatsPage,
 } from '@/pages/lazy'
 import { LoginPage } from '@/pages/LoginPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
@@ -46,6 +47,7 @@ export const router = createBrowserRouter([
       { path: 'reset-password', element: <ResetPasswordPage /> },
       { path: 'favorites', element: page(<RequireAuth><FavoritesPage /></RequireAuth>) },
       { path: 'my/equipment/:id/calendar', element: ownerOnly(<CalendarPage />) },
+      { path: 'my/stats', element: ownerOnly(<StatsPage />) },
       { path: 'admin', element: page(<RequireAuth roles={['admin']}><AdminPage /></RequireAuth>) },
       { path: '*', element: <NotFoundPage /> },
     ],

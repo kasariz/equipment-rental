@@ -1,0 +1,37 @@
+name: Uptime
+
+# Проверка доступности сайта снаружи: если сервер или домашний интернет упал,
+# сам сайт сообщить об этом не сможет. Запускается раз в 10 минут бесплатно.
+# Настройки в репозитории: Settings → Secrets and variables → Actions
+#   Variables: SITE_URL (например, https://kovsh.duckdns.org)
+#   Secrets:   MONITOR_BOT_TOKEN, MONITOR_CHAT_ID
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch: # кнопка ручного запуска для проверки
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Проверить сайт
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+          BOT_TOKEN: ${{ secrets.MONITOR_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.MONITOR_CHAT_ID }}
+        run: |
+          if [ -z "$SITE_URL" ]; then echo "SITE_URL не задан — проверка пропущена"; exit 0; fi
+          # Три попытки с паузой: короткий сбой сети не повод будить человека
+          for attempt in 1 2 3; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' -m 15 "$SITE_URL/api/health" || true)
+            if [ "$code" = "200" ]; then echo "Сайт работает"; exit 0; fi
+            echo "Попытка $attempt: код $code"
+            sleep 20
+          done
+          if [ -n "$BOT_TOKEN" ] && [ -n "$CHAT_ID" ]; then
+            curl -s "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" \
+              -d chat_id="$CHAT_ID" \
+              --data-urlencode text="🔴 Сайт $SITE_URL не отвечает (код ${code:-нет ответа}). Проверьте компьютер, Docker и интернет." > /dev/null
+          fi
+          exit 1

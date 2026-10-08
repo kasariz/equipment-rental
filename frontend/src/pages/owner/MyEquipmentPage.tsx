@@ -1,4 +1,4 @@
-import { CalendarDays, Pencil, Plus, Trash2 } from 'lucide-react'
+import { CalendarDays, ChartColumn, Pencil, Plus, Trash2 } from 'lucide-react'
 import { Link } from 'react-router'
 import { toast } from 'sonner'
 import { EquipmentImage } from '@/components/EquipmentImage'
@@ -23,12 +23,20 @@ export function MyEquipmentPage() {
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-14">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-display text-3xl font-semibold tracking-tight">Моя техника</h1>
+        <div className="flex flex-wrap gap-2">
+        <Button asChild variant="outline">
+          <Link to="/my/stats">
+            <ChartColumn />
+            Статистика
+          </Link>
+        </Button>
         <Button asChild>
           <Link to="/my/equipment/new">
             <Plus />
             Добавить технику
           </Link>
         </Button>
+        </div>
       </div>
 
       {isPending && <PageSpinner />}

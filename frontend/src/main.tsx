@@ -5,6 +5,7 @@ import { RouterProvider } from 'react-router'
 import { Toaster } from 'sonner'
 import { router } from './router'
 import './index.css'
+import { setupPwa } from './lib/pwa'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { refetchOnWindowFocus: false } },
@@ -18,3 +19,5 @@ createRoot(document.getElementById('root')!).render(
     </QueryClientProvider>
   </StrictMode>,
 )
+
+setupPwa()

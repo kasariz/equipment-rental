@@ -920,6 +920,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/owner/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Owner Stats */
+        get: operations["stats-owner_stats"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1225,6 +1242,16 @@ export interface components {
              */
             reviews_count: number;
         };
+        /** DayLoad */
+        DayLoad: {
+            /**
+             * Day
+             * Format: date
+             */
+            day: string;
+            /** Busy */
+            busy: number;
+        };
         /** EquipmentCreate */
         EquipmentCreate: {
             /** Name */
@@ -1352,6 +1379,23 @@ export interface components {
              */
             created_at: string;
         };
+        /** EquipmentStats */
+        EquipmentStats: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /** Busy Days */
+            busy_days: number;
+            /** Blocked Days */
+            blocked_days: number;
+            /** Utilization */
+            utilization: number;
+            /** Revenue */
+            revenue: number;
+            /** Deals */
+            deals: number;
+        };
         /**
          * EquipmentStatus
          * @enum {string}
@@ -1425,6 +1469,26 @@ export interface components {
              * @default 0
              */
             reviews_count: number;
+        };
+        /** OwnerStats */
+        OwnerStats: {
+            /** Month */
+            month: string;
+            /** Days In Month */
+            days_in_month: number;
+            /** Equipment Count */
+            equipment_count: number;
+            requests: components["schemas"]["RequestCounts"];
+            /** Revenue Completed */
+            revenue_completed: number;
+            /** Revenue Expected */
+            revenue_expected: number;
+            /** Utilization */
+            utilization: number;
+            /** Equipment */
+            equipment: components["schemas"]["EquipmentStats"][];
+            /** Days */
+            days: components["schemas"]["DayLoad"][];
         };
         /** Page[AdminEquipmentRead] */
         Page_AdminEquipmentRead_: {
@@ -1504,6 +1568,21 @@ export interface components {
         RejectBody: {
             /** Reason */
             reason?: string | null;
+        };
+        /** RequestCounts */
+        RequestCounts: {
+            /** Total */
+            total: number;
+            /** Pending */
+            pending: number;
+            /** Confirmed */
+            confirmed: number;
+            /** Rejected */
+            rejected: number;
+            /** Cancelled */
+            cancelled: number;
+            /** Expired */
+            expired: number;
         };
         /** ResetLink */
         ResetLink: {
@@ -3576,6 +3655,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EquipmentListItem"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "stats-owner_stats": {
+        parameters: {
+            query?: {
+                /** @description ГГГГ-ММ, по умолчанию текущий */
+                month?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnerStats"];
                 };
             };
             /** @description Validation Error */

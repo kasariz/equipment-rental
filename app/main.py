@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.api.router import api_router
 from app.core.config import settings
+from app.services import alerts
 from app.services.booking_expiry import expiry_loop
 from app.services.media import ensure_media_dirs
 from app.services.telegram.bot import polling_loop
@@ -21,6 +22,8 @@ def generate_operation_id(route: APIRoute) -> str:
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     ensure_media_dirs()
+    alerts.install()
+    await alerts.send_alert("🟢 Сервер «Ковш» запущен", key="startup")
     tasks = [asyncio.create_task(expiry_loop()), asyncio.create_task(polling_loop())]
     yield
     for task in tasks:

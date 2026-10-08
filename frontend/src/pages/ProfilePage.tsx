@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { toast } from 'sonner'
+import { InstallApp } from '@/components/InstallApp'
 import { Stars } from '@/components/Stars'
 import { TelegramConnect } from '@/components/TelegramConnect'
 import { useMyRatings } from '@/features/reviews/api'
+import type { UserRole } from '@/api/client'
 import { Button } from '@/components/ui/button'
 import { PasswordInput } from '@/components/ui/password-input'
 import { useDeleteAccount } from '@/features/account/api'
@@ -12,13 +14,16 @@ import { formatPhone } from '@/lib/phone'
 
 const dateFormat = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
 
-function MyRatings() {
+function MyRatings({ role }: { role: UserRole }) {
   const { data } = useMyRatings()
   if (!data) return null
+  // Рейтинг владельца — только владельцам. Рейтинг арендатора — арендаторам, а владельцу,
+  // только если он сам что-то арендовал и получил отзывы
   const rows = [
-    ['Как владелец', data.as_owner],
-    ['Как арендатор', data.as_renter],
-  ] as const
+    ...(role === 'owner' ? [['Как владелец', data.as_owner] as const] : []),
+    ...(role === 'client' || data.as_renter.count > 0 ? [['Как арендатор', data.as_renter] as const] : []),
+  ]
+  if (rows.length === 0) return null
   return (
     <section className="mt-10">
       <h2 className="font-display text-lg font-semibold">Мой рейтинг</h2>
@@ -44,7 +49,7 @@ function MyRatings() {
   )
 }
 
-function DeleteAccount() {
+function DeleteAccount({ isOwner }: { isOwner: boolean }) {
   const [password, setPassword] = useState('')
   const [open, setOpen] = useState(false)
   const del = useDeleteAccount()
@@ -54,8 +59,8 @@ function DeleteAccount() {
     <section className="mt-12 border-t border-line pt-8">
       <h2 className="font-display text-lg font-semibold">Удаление аккаунта</h2>
       <p className="mt-2 max-w-prose text-sm text-steel">
-        Вместе с аккаунтом удалятся ваша техника, брони и отзывы. Это отзыв согласия на обработку
-        персональных данных, восстановить данные будет нельзя.
+        Вместе с аккаунтом удалятся {isOwner ? 'ваша техника, брони и отзывы' : 'ваши брони, избранное и отзывы'}.
+        Восстановить данные будет нельзя.
       </p>
       {!open ? (
         <Button variant="outline" className="mt-4 border-danger/40 text-danger hover:border-danger" onClick={() => setOpen(true)}>
@@ -119,7 +124,9 @@ export function ProfilePage() {
         ))}
       </dl>
 
-      <MyRatings />
+      <MyRatings role={user.role} />
+
+      <InstallApp />
 
       <TelegramConnect isOwner={user.role === 'owner' || user.role === 'admin'} />
 
@@ -139,7 +146,7 @@ export function ProfilePage() {
         Выйти из аккаунта
       </Button>
 
-      <DeleteAccount />
+      <DeleteAccount isOwner={user.role !== 'client'} />
     </div>
   )
 }

@@ -51,6 +51,10 @@ class Settings(BaseSettings):
     smtp_from: str = ""
     password_reset_ttl_minutes: int = 30
 
+    # Мониторинг: отдельный Telegram-бот, который пишет администратору об ошибках на сервере
+    alert_bot_token: str = ""
+    alert_chat_id: str = ""
+
     # Ограничение частоты запросов. В тестах выключается, чтобы регистрировать много пользователей подряд
     rate_limit_enabled: bool = True
 
