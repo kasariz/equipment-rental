@@ -11,3 +11,4 @@ media/
 .env.prod
 .pytest_cache/
 .ruff_cache/
+backups/

@@ -10,3 +10,5 @@ tests
 *.pyc
 .pytest_cache
 .ruff_cache
+backups
+backup

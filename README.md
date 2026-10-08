@@ -81,6 +81,22 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod exec backend pyth
   поэтому сообщение придёт, даже если выключился компьютер или пропал интернет. Настройки: переменная
   репозитория `SITE_URL` и секреты `MONITOR_BOT_TOKEN`, `MONITOR_CHAT_ID`.
 
+## Резервные копии
+
+Контейнер `backup` каждую ночь (03:00 по Москве) делает дамп базы и архив фото в папку `BACKUP_DIR`
+на другом диске, сразу проверяет, что дамп читается, и хранит копии `BACKUP_KEEP_DAYS` дней.
+Если копия не сделалась, бот мониторинга пишет администратору.
+
+```powershell
+# сделать копию сейчас
+docker compose -f docker-compose.prod.yml --env-file .env.prod exec backup /scripts/backup.sh
+# список копий и восстановление (текущие данные заменяются!)
+docker compose -f docker-compose.prod.yml --env-file .env.prod stop backend
+docker compose -f docker-compose.prod.yml --env-file .env.prod exec backup /scripts/restore.sh
+docker compose -f docker-compose.prod.yml --env-file .env.prod exec backup /scripts/restore.sh db_2026-10-08_00-00.dump
+docker compose -f docker-compose.prod.yml --env-file .env.prod start backend
+```
+
 ## Приложение на телефон (PWA)
 
 Сайт устанавливается на главный экран как приложение: манифест, иконки и service worker. Файлы сборки
